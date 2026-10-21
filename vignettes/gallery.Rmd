@@ -1,0 +1,177 @@
+---
+title: "Gallery of recipes"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Gallery of recipes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center",
+                      dpi = 110, dev = "png", out.width = "100%", fig.width = 6, fig.height = 6)
+```
+
+ggcalor is a grammar of cells. Every chart below is the same grid with
+different cells, ordering, and tracks. The recipes are short on purpose: copy
+one and swap in your data.
+
+```{r setup}
+library(ggcalor)
+set.seed(42)
+```
+
+## Expression matrix with trees, splits, annotations
+
+```{r expression, fig.width = 7, fig.height = 8}
+m <- matrix(rnorm(30 * 12), 30, 12,
+            dimnames = list(paste0("gene_", 1:30), paste0("sample", 1:12)))
+m[1:10, 1:6] <- m[1:10, 1:6] + 2.5
+m[11:20, 7:12] <- m[11:20, 7:12] - 2
+samples <- data.frame(condition = rep(c("control", "treated"), each = 6),
+                      batch = rep(c("b1", "b2", "b3"), 4), row.names = colnames(m))
+genes <- data.frame(type = sample(c("TF", "kinase", "other"), 30, TRUE),
+                    row.names = rownames(m))
+
+ggcalor(m, cell_size = 4.5, scale = "row") +
+  calor_dendro(rows = TRUE, cols = TRUE, k = 3, highlight = TRUE) +
+  calor_split(rows = 3, gap = 2) +
+  calor_anno(top = samples, left = genes,
+             colours = list(condition = c(control = "grey70", treated = "firebrick"))) +
+  calor_margin(right = "mean", bottom = "boxplot") +
+  calor_legend("histogram")
+```
+
+The final order is available for reuse:
+
+```{r order}
+p <- ggcalor(m) + calor_dendro(rows = TRUE, cols = TRUE)
+str(calor_order_of(p))
+```
+
+## Oncoprint
+
+A categorical matrix gets a discrete fill. Clustering, ordering and margins
+then work on presence. The memo sort orders samples so those altered in the
+most frequent gene come first.
+
+```{r oncoprint, fig.width = 8, fig.height = 4}
+genes <- c("TP53", "KRAS", "EGFR", "PIK3CA", "BRAF", "PTEN", "ALK", "MET")
+samples <- sprintf("S%02d", 1:40)
+mut <- matrix(NA_character_, 8, 40, dimnames = list(genes, samples))
+types <- c("missense", "nonsense", "amplification", "deletion")
+freq <- c(.6, .45, .3, .3, .2, .2, .1, .1)
+for (g in seq_along(genes)) {
+  idx <- sample(40, rbinom(1, 40, freq[g]))
+  mut[g, idx] <- sample(types, length(idx), TRUE, prob = c(.5, .2, .15, .15))
+}
+stage <- data.frame(stage = sample(c("I", "II", "III"), 40, TRUE), row.names = samples)
+
+ggcalor(mut, cell_size = c(3, 6), cell_gap = 0.15, border = NA, na_fill = "grey93",
+        labels = "rows") +
+  calor_order(rows = "sum", cols = "memo") +
+  calor_margin(right = "sum", top = "sum", size = 8) +
+  calor_anno(bottom = stage, size = 3) +
+  labs(fill = "alteration")
+```
+
+## Correlation matrix
+
+Order first, then mask the upper triangle. Circle area follows the absolute
+correlation and masked cells are hidden with a transparent `na_fill`.
+
+```{r correlation, fig.width = 5, fig.height = 5}
+x <- matrix(rnorm(300), 50, 6, dimnames = list(NULL, paste0("v", 1:6)))
+x[, 2] <- x[, 1] + rnorm(50, sd = 0.5); x[, 4] <- -x[, 3] + rnorm(50, sd = 0.7)
+cm <- cor(x)
+o <- hclust(dist(cm))$order
+cm <- cm[o, o]
+
+ggcalor(cm, cell_size = 9, mask = upper.tri(cm), cell_shape = "circle",
+        cell_area = abs(cm), border = NA, na_fill = NA) +
+  calor_text(digits = 2, size = 6) +
+  labs(fill = "r")
+```
+
+## Dot plot
+
+Fill carries one matrix and cell area another, the single-cell dot plot.
+
+```{r dotplot, fig.width = 5, fig.height = 5}
+mean_expr <- matrix(runif(60, 0, 3), 10, 6,
+                    dimnames = list(paste0("gene", 1:10), paste0("cluster", 1:6)))
+pct_expr <- matrix(runif(60), 10, 6)
+
+ggcalor(mean_expr, cell_shape = "circle", cell_size = 6, cell_area = pct_expr,
+        border = "grey40") +
+  calor_dendro(rows = TRUE) +
+  calor_order(cols = "mean") +
+  labs(fill = "mean")
+```
+
+## Calendar heatmaps
+
+Long data goes straight in. A binned fill scale and gaps give the editorial
+look; `coord_radial()` turns the same grid into a ring.
+
+```{r calendar, fig.width = 8, fig.height = 4}
+crashes <- expand.grid(month = month.abb, hour = sprintf("%02d", 0:23))
+crashes$pct <- with(crashes, 10 + 25 * (as.integer(hour) < 5) +
+                      8 * (as.integer(hour) > 19) + runif(nrow(crashes), 0, 10))
+
+ggcalor(crashes, rows = "month", cols = "hour", value = "pct",
+        cell_size = 5, cell_gap = 0.12, border = NA) +
+  scale_fill_fermenter(palette = "BuPu", direction = 1, n.breaks = 6) +
+  theme(legend.position = "bottom", legend.key.width = grid::unit(10, "mm"),
+        legend.key.height = grid::unit(3, "mm"),
+        axis.text.x.top = element_text(angle = 0))
+```
+
+```{r radial, fig.width = 6, fig.height = 6}
+ggcalor(crashes, rows = "month", cols = "hour", value = "pct",
+        cell_size = 4, cell_gap = 0.12) +
+  coord_radial(inner.radius = 0.3, expand = FALSE, r.axis.inside = TRUE) +
+  scale_fill_fermenter(palette = "BuPu", direction = 1, n.breaks = 6)
+```
+
+## Hex cells
+
+```{r hex, fig.width = 7, fig.height = 4}
+hx <- t(apply(matrix(rnorm(12 * 20), 12, 20), 1, cumsum))
+dimnames(hx) <- list(paste0("r", 1:12), paste0("c", 1:20))
+
+ggcalor(hx, cell_shape = "hex", cell_size = 5, cell_gap = 0.06) +
+  scale_fill_distiller(palette = "Spectral")
+```
+
+## Waffle
+
+```{r waffle, fig.width = 6, fig.height = 3}
+pop <- data.frame(decile = rep(c("<100", "3K", "12K", "43K"), each = 4),
+                  region = rep(c("Africa", "China", "India", "Europe"), 4),
+                  share = c(60, 10, 25, 5, 30, 30, 30, 10, 10, 40, 20, 30, 5, 10, 5, 80))
+ggwaffle(pop, "region", "share", by = "decile", n = 100, rows = 20, cell_size = 2.5)
+```
+
+## Interactive
+
+With ggiraph installed, cells and categorical tracks get tooltips, and
+hovering a row annotation highlights the whole row.
+
+```{r interactive, eval = FALSE}
+ggcalor(m, scale = "row") +
+  calor_dendro(rows = TRUE, cols = TRUE) +
+  calor_anno(top = samples, left = genes) +
+  calor_interactive(data_id = "row") |>
+  calor_girafe()
+```
+
+## Saving
+
+`calor_save()` computes the device size from the cells, trees and legends, so
+the file holds exactly what you built.
+
+```{r save, eval = FALSE}
+calor_save(p, "heatmap.pdf")
+calor_save(p, "heatmap.png", dpi = 300)
+```

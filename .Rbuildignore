@@ -1,0 +1,12 @@
+^RESEARCH\.md$
+^inspiration$
+^LICENSE\.md$
+^.*\.Rproj$
+^\.Rproj\.user$
+^dev$
+^Rplots\.pdf$
+^ggcalor\.Rcheck$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^man/figures/readme-.*\.png$

@@ -1,0 +1,38 @@
+Package: ggcalor
+Title: Heatmaps as a Grammar of Cells for 'ggplot2'
+Version: 0.0.0.9000
+Authors@R: 
+    person("Loukas", "Theodosiou", , "loukesio@gmail.com", role = c("aut", "cre"))
+Description: A 'ggplot2'-native grammar for heatmaps and other cell grids.
+    Cells are square by default and sized in absolute units, so the plot sizes
+    itself instead of the device. Rows and columns can be scaled, ordered,
+    clustered and decorated with dendrograms, and the result stays an ordinary
+    'ggplot' object that accepts themes, scales and labels. 'calor' is Spanish
+    for heat.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.1),
+    ggplot2 (>= 4.0.0)
+Imports:
+    S7,
+    patchwork,
+    grid,
+    rlang,
+    cli,
+    stats,
+    grDevices
+Suggests:
+    testthat (>= 3.0.0),
+    ragg,
+    ggiraph,
+    htmlwidgets,
+    knitr,
+    rmarkdown,
+    withr
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+URL: https://github.com/loukesio/ggcalor, https://loukesio.github.io/ggcalor/
+BugReports: https://github.com/loukesio/ggcalor/issues
