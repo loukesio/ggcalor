@@ -9,7 +9,7 @@ navbar:
     right: [github]
 reference:
   - title: Build a heatmap
-    contents: [ggcalor, geom_cell, theme_calor, scale_fill_calor_d, calor_scale, calor_matrix]
+    contents: [ggcalor, geom_cell, theme_calor, scale_fill_calor_d, calor_colourbar, calor_scale, calor_matrix]
   - title: Order, cluster, split
     contents: [calor_order, calor_dendro, calor_split, calor_order_of]
   - title: Decorate
@@ -17,7 +17,9 @@ reference:
   - title: Interact and save
     contents: [calor_interactive, calor_girafe, calor_save, calor_size]
   - title: Other cell grids
-    contents: [ggwaffle]
+    contents: [calor_radial, ggwaffle]
+  - title: Data
+    contents: [dvs_members]
   - title: Internals
     contents: [class_calor, is_calor]
 articles:

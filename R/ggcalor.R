@@ -142,9 +142,10 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
     rng <- range(m, na.rm = TRUE)
     p <- p + if (rng[1] < 0 && rng[2] > 0) {
       scale_fill_gradient2(low = "#2166AC", mid = "#F7F7F7", high = "#B2182B",
-                           na.value = na_fill)
+                           na.value = na_fill, guide = calor_colourbar())
     } else {
-      scale_fill_viridis_c(option = "inferno", direction = -1, na.value = na_fill)
+      scale_fill_viridis_c(option = "inferno", direction = -1, na.value = na_fill,
+                           guide = calor_colourbar())
     }
   }
 
@@ -185,8 +186,7 @@ theme_calor <- function(base_size = 10, base_family = "") {
       axis.text.y = element_text(hjust = 1, margin = margin(r = 3)),
       axis.text.x.top = element_text(angle = 90, hjust = 0, vjust = 0.5, margin = margin(b = 3)),
       axis.text.x.bottom = element_text(angle = 90, hjust = 1, vjust = 0.5, margin = margin(t = 3)),
-      legend.key.height = grid::unit(10, "mm"),
-      legend.key.width = grid::unit(3.5, "mm"),
+      legend.key.size = grid::unit(4, "mm"),
       strip.text = element_text(size = 8, colour = "grey20"),
       strip.background = element_rect(fill = "grey93", colour = NA),
       strip.text.y = element_text(angle = -90),
@@ -208,4 +208,16 @@ hex_extent <- function(nrow, ncol) {
   r <- 1 / sqrt(3)
   ypos <- (nrow - seq_len(nrow)) * sqrt(3) / 2 + 1
   list(xlim = c(0.5, ncol + 1), ylim = c(1 - r, max(ypos) + r), ypos = ypos)
+}
+
+#' Colour bar guide used by ggcalor
+#'
+#' A tall, narrow colour bar. Pass it as `guide` to any continuous fill scale
+#' you add, to keep the look.
+#' @param height,width Bar size in millimetres.
+#' @param ... Passed to [ggplot2::guide_colourbar()].
+#' @export
+calor_colourbar <- function(height = 45, width = 3.5, ...) {
+  guide_colourbar(theme = theme(legend.key.height = grid::unit(height, "mm"),
+                                legend.key.width = grid::unit(width, "mm")), ...)
 }

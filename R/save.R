@@ -29,5 +29,14 @@ calor_size <- function(plot) {
   g <- ggplot2::ggplotGrob(plot)
   abs_mm <- function(u) sum(vapply(seq_along(u), function(i)
     grid::convertUnit(u[i], "mm", valueOnly = TRUE), numeric(1)))
-  c(abs_mm(g$widths), abs_mm(g$heights))
+  sz <- c(abs_mm(g$widths), abs_mm(g$heights))
+  # Ring labels radiate beyond the panel and are not part of the gtable sizes.
+  if (is_calor(plot) && !plot@coordinates$is_linear()) {
+    th <- plot@theme
+    size_pt <- th$axis.text.theta$size %||% th$axis.text$size %||% 8
+    longest <- max(nchar(colnames(calor_state(plot)$matrix)), 1)
+    pad <- longest * size_pt * 0.5 / 72.27 * 25.4 + 1
+    sz <- sz + 2 * pad
+  }
+  sz
 }

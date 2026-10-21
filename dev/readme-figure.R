@@ -45,11 +45,13 @@ pop <- data.frame(decile = rep(c("<100", "3K", "12K", "43K"), each = 4),
 p4 <- ggwaffle(pop, "region", "share", by = "decile", n = 100, rows = 20, cell_size = 2.5)
 ggsave("man/figures/readme-waffle.png", p4, width = 6, height = 3, dpi = 150, bg = "white")
 
-# Radial calendar
-cal <- matrix(runif(12 * 24), 12, 24, dimnames = list(month.abb, sprintf("%02d", 0:23)))
-p5 <- ggcalor(cal, cell_size = 4, cell_gap = 0.12) +
-  coord_radial(inner.radius = 0.3, expand = FALSE) +
-  theme(axis.text.x = element_text(size = 6))
+# Radial ring
+p5 <- ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
+              cell_size = 2.4, border = "grey85", na_fill = "white") +
+  calor_radial(inner.radius = 0.45) +
+  scale_fill_manual(values = c(Data = "#f2c200", Visualization = "#e03b3b", Society = "#4a7bd0"),
+                    na.translate = FALSE) +
+  labs(fill = NULL)
 calor_save(p5, "man/figures/readme-radial.png", dpi = 150)
 
 # Oncoprint

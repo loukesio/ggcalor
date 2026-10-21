@@ -10,3 +10,4 @@
 ^docs$
 ^pkgdown$
 ^man/figures/readme-.*\.png$
+^data-raw$

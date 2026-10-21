@@ -113,31 +113,23 @@ ggcalor(crashes, rows = "month", cols = "hour", value = "pct",
 ```{r radial, fig.width = 6, fig.height = 6}
 ggcalor(crashes, rows = "month", cols = "hour", value = "pct",
         cell_size = 4, cell_gap = 0.12) +
-  coord_radial(inner.radius = 0.3, expand = FALSE, r.axis.inside = TRUE) +
+  calor_radial(inner.radius = 0.3, legend = "outside") +
   scale_fill_fermenter(palette = "BuPu", direction = 1, n.breaks = 6)
 ```
 
 ## Radial ring of categories
 
-Many thin columns around a wide ring make the wedges read as squares. Empty
-cells stay white with the grid showing, and the legend sits in the hole.
+Long data goes straight in, one row per country and month. `calor_radial()`
+does the rest: labels radiate outward, the months sit in the gap, the legend
+is in the hole. The country names are real; the membership is simulated.
 
 ```{r ring, fig.width = 7, fig.height = 7}
-countries <- paste0("Country ", sprintf("%03d", 1:130))
-ring <- matrix(NA_character_, 12, 130, dimnames = list(month.abb, countries))
-for (j in 1:130) {
-  idx <- sample(12, rbinom(1, 12, 0.35))
-  ring[idx, j] <- sample(c("Data", "Visualization", "Society"), length(idx), TRUE)
-}
-
-ggcalor(ring, cell_size = 2.4, border = "grey85", na_fill = "white", labels = "cols") +
-  coord_radial(inner.radius = 0.45, expand = FALSE, rotate.angle = TRUE) +
-  scale_fill_manual(values = c(Data = "#f2c200", Visualization = "#e03b3b", Society = "#4a7bd0"),
-                    na.translate = FALSE) +
-  theme(axis.text.x = element_text(size = 4.5), panel.grid = element_blank(),
-        legend.position = "inside", legend.position.inside = c(0.5, 0.5),
-        legend.direction = "horizontal", legend.title = element_blank(),
-        legend.key.size = grid::unit(3, "mm"), legend.text = element_text(size = 7))
+ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
+        cell_size = 2.4, border = "grey85", na_fill = "white") +
+  calor_radial(inner.radius = 0.45) +
+  scale_fill_manual(values = c(Data = "#f2c200", Visualization = "#e03b3b",
+                               Society = "#4a7bd0"), na.translate = FALSE) +
+  labs(fill = NULL)
 ```
 
 ## Smooth surfaces

@@ -32,6 +32,15 @@ test_that("radial coordinates render without tracks and warn with them", {
   p <- ggcalor(m) + coord_radial(inner.radius = 0.2)
   expect_s3_class(ggplotGrob(p), "gtable")
   expect_warning(ggplotGrob(p + calor_dendro(rows = TRUE)), "non-linear")
+  r <- ggcalor(m) + calor_radial(inner.radius = 0.4)
+  expect_false(r@coordinates$is_linear())
+  expect_equal(r@theme$legend.position, "inside")
+  expect_s3_class(ggplotGrob(r), "gtable")
+  # later theme() calls still win, and ring labels add to the natural size
+  r2 <- r + theme(legend.position = "right")
+  expect_equal(r2@theme$legend.position, "right")
+  expect_gt(calor_size(r)[1], calor_size(ggcalor(m) + coord_radial())[1] - 1e-9)
+  expect_s3_class(ggplotGrob(ggcalor(dvs_members, "month", "country", "trait") + calor_radial()), "gtable")
 })
 
 test_that("waffle allocates cells by largest remainder", {

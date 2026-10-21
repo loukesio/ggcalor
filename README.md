@@ -74,17 +74,19 @@ ggcalor(mut, cell_size = c(3, 6), cell_gap = 0.15, border = NA, na_fill = "grey9
 
 ![Oncoprint with memo sort](man/figures/readme-oncoprint.png)
 
-The same cells make a waffle or a radial calendar:
+The same cells make a waffle, or a ring with 130 countries around and the
+months along the radius:
 
 ```r
 ggwaffle(pop, "region", "share", by = "decile", n = 100, rows = 20, cell_size = 2.5)
 
-ggcalor(cal, cell_size = 4, cell_gap = 0.12) +
-  coord_radial(inner.radius = 0.3, expand = FALSE)
+ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
+        cell_size = 2.4, border = "grey85", na_fill = "white") +
+  calor_radial(inner.radius = 0.45)
 ```
 
 ![Waffle chart](man/figures/readme-waffle.png)
-![Radial calendar](man/figures/readme-radial.png)
+![Radial ring of countries by month](man/figures/readme-radial.png)
 
 Or a smooth surface, interpolated and blurred from the same matrix:
 
@@ -133,6 +135,7 @@ calor_save(p, "heatmap.pdf")
 | `calor_bracket(cols, rows)` | Brackets with labels over groups |
 | `calor_legend("histogram")` | Histogram of values in place of the colour bar |
 | `calor_interactive()`, `calor_girafe(p)` | Tooltips and linked highlighting with 'ggiraph' |
+| `calor_radial(inner.radius)` | The grid as a ring, with readable labels and the legend in the hole |
 | `ggwaffle(counts)` | Unit chart on the same cell grid |
 | `ggcalor(smooth = "contour")` | Interpolated, blurred surface as contour bands or a raster |
 | `calor_order_of(p)` | The final row and column order, for reuse |
@@ -141,8 +144,8 @@ calor_save(p, "heatmap.pdf")
 | `geom_cell()` | The cell geom, usable on any ggplot |
 
 Large matrices rasterise automatically above 20,000 cells, and row or column
-labels disappear when cells are thinner than 2 mm. Radial layouts come from
-adding `coord_radial()`; tracks are not drawn there.
+labels disappear when cells are thinner than 2 mm. Rings come from `calor_radial()`;
+tracks are not drawn there.
 
 More recipes, including a correlation matrix, a radial ring, hex cells and
 calendars, are in `vignette("gallery")`.
