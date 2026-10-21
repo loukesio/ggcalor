@@ -35,17 +35,17 @@ ggcalor(m, cell_size = 4.5, scale = "row") +
 
 ![Clustered, split and annotated expression heatmap](man/figures/readme-dendro.png)
 
-One cell grid, many looks. Cells can be circles or rounded squares, carry
-their values as text, and splits keep every cell square:
+One cell grid, many looks. Cells carry their values as text, splits keep every
+cell square, and trees are clustered within each slice:
 
 ```r
-ggcalor(m[1:12, ], cell_size = 7, cell_shape = "circle", cell_gap = 0.1) +
+ggcalor(m[1:12, ], cell_size = 7, cell_gap = 0.1) +
   calor_split(cols = samples$condition) +
   calor_dendro(rows = TRUE, cols = TRUE) +
   calor_text(digits = 1, size = 5)
 ```
 
-![Circle cells with values and split columns](man/figures/readme-circles.png)
+![Values in cells with split columns](man/figures/readme-split.png)
 
 A histogram legend, glyph tracks and group brackets:
 
@@ -86,6 +86,14 @@ ggcalor(cal, cell_size = 4, cell_gap = 0.12) +
 ![Waffle chart](man/figures/readme-waffle.png)
 ![Radial calendar](man/figures/readme-radial.png)
 
+Or a smooth surface, interpolated and blurred from the same matrix:
+
+```r
+ggcalor(f, cell_size = 3, smooth = "contour", smooth_sigma = 1.5, smooth_bins = 8)
+```
+
+![Smooth contour surface](man/figures/readme-surface.png)
+
 Interactive, with tooltips and row highlighting, through 'ggiraph':
 
 ```r
@@ -115,7 +123,7 @@ calor_save(p, "heatmap.pdf")
 
 | Verb | What it does |
 |---|---|
-| `ggcalor(data, cell_size, cell_shape, cell_gap, cell_radius, scale, mask, ...)` | Matrix, wide or long data in; square cells out |
+| `ggcalor(data, cell_size, cell_gap, scale, mask, ...)` | Matrix, wide or long data in; square cells out |
 | `calor_order(rows, cols)` | Sort by a statistic, a row/column, a vector, a function, or cluster leaf order |
 | `calor_dendro(rows, cols, k, highlight)` | Cluster, reorder and draw aligned trees; accepts `hclust` and `dendrogram` |
 | `calor_split(rows, cols, gap)` | Slices from a grouping vector or by cutting the tree; cells stay square |
@@ -126,6 +134,7 @@ calor_save(p, "heatmap.pdf")
 | `calor_legend("histogram")` | Histogram of values in place of the colour bar |
 | `calor_interactive()`, `calor_girafe(p)` | Tooltips and linked highlighting with 'ggiraph' |
 | `ggwaffle(counts)` | Unit chart on the same cell grid |
+| `ggcalor(smooth = "contour")` | Interpolated, blurred surface as contour bands or a raster |
 | `calor_order_of(p)` | The final row and column order, for reuse |
 | `calor_save(p, file)` | Save at natural size |
 | `theme_calor()` | Minimal theme for cell grids |
@@ -135,7 +144,7 @@ Large matrices rasterise automatically above 20,000 cells, and row or column
 labels disappear when cells are thinner than 2 mm. Radial layouts come from
 adding `coord_radial()`; tracks are not drawn there.
 
-More recipes, including a correlation matrix, a dot plot, hex cells and
+More recipes, including a correlation matrix, a radial ring, hex cells and
 calendars, are in `vignette("gallery")`.
 
 ## Roadmap

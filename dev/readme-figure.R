@@ -17,11 +17,11 @@ p <- ggcalor(m, cell_size = 4.5, scale = "row") +
   labs(title = "Expression, z-scored by gene", subtitle = "rows cut into three clusters")
 calor_save(p, "man/figures/readme-dendro.png", dpi = 150)
 
-p2 <- ggcalor(m[1:12, ], cell_size = 7, cell_shape = "circle", cell_gap = 0.1) +
+p2 <- ggcalor(m[1:12, ], cell_size = 7, cell_gap = 0.1) +
   calor_split(cols = samples$condition) +
   calor_dendro(rows = TRUE, cols = TRUE) +
   calor_text(digits = 1, size = 5)
-calor_save(p2, "man/figures/readme-circles.png", dpi = 150)
+calor_save(p2, "man/figures/readme-split.png", dpi = 150)
 
 # Histogram legend, glyph track, brackets
 set.seed(11)
@@ -68,3 +68,13 @@ p6 <- ggcalor(mut, cell_size = c(3, 6), cell_gap = 0.15, border = NA, na_fill = 
   calor_margin(right = "sum", top = "sum", size = 8) +
   labs(fill = "alteration")
 calor_save(p6, "man/figures/readme-oncoprint.png", dpi = 150)
+
+# Smooth surface
+set.seed(8)
+f <- outer(1:30, 1:45, function(i, j) sin(i / 4) * cos(j / 6) + 0.6 * sin((i + j) / 5))
+f <- f + matrix(rnorm(length(f), sd = 0.25), nrow(f))
+dimnames(f) <- list(paste0("r", 1:30), paste0("c", 1:45))
+p7 <- ggcalor(f, cell_size = 3, smooth = "contour", smooth_sigma = 1.5, smooth_bins = 8, labels = "none") +
+  scale_fill_manual(values = c("#1b4d8f", "#2a9df4", "#3cb44b", "#bfef45", "#ffe119", "#f58231", "#e6194b", "#c71585")) +
+  theme(legend.position = "none")
+calor_save(p7, "man/figures/readme-surface.png", dpi = 150)

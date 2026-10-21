@@ -30,6 +30,11 @@
 #'   more than `raster_threshold` cells, `"always"` or `"never"`. Raster cells
 #'   have no gap, border or shape.
 #' @param raster_threshold Cell count above which `"auto"` rasterises.
+#' @param smooth `"none"` draws cells. `"contour"` interpolates and blurs the
+#'   matrix into a surface drawn as filled contour bands; `"raster"` draws the
+#'   same surface as a continuous image. Dendrograms and tracks still align.
+#' @param smooth_sigma Blur radius in cells.
+#' @param smooth_bins Number of contour bands.
 #' @param labels Which labels to show: `"both"`, `"rows"`, `"cols"` or `"none"`.
 #' @param label_position Where column labels go: `"auto"` (top, or bottom when
 #'   a column dendrogram is present), `"top"` or `"bottom"`.
@@ -47,6 +52,7 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
                     mask = NULL, na_fill = "grey92", border = "white",
                     palette = "auto", raster = c("auto", "never", "always"),
                     raster_threshold = 20000,
+                    smooth = c("none", "contour", "raster"), smooth_sigma = 1, smooth_bins = 9,
                     labels = c("both", "rows", "cols", "none"),
                     label_position = c("auto", "top", "bottom")) {
   scale <- rlang::arg_match(scale)
@@ -54,9 +60,11 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
   raster <- rlang::arg_match(raster)
   label_position <- rlang::arg_match(label_position)
   labels <- rlang::arg_match(labels)
+  smooth <- rlang::arg_match(smooth)
   raw <- calor_matrix(data, rows, cols, value)
   categorical <- is.character(raw)
   if (categorical && scale != "none") cli::cli_abort("{.arg scale} needs numeric values.")
+  if (categorical && smooth != "none") cli::cli_abort("{.arg smooth} needs numeric values.")
   m <- if (categorical) raw else calor_scale(raw, scale, scale_method)
   num <- numeric_proxy(m)   # clustering and ordering ignore the mask
   if (!is.null(mask)) {
@@ -81,7 +89,20 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
               colour = border, linewidth = if (is.na(border)) 0 else 0.3)
   }
   if (!is.null(cell_area)) cells$mapping <- aes(area = .data$.area)
-  if (hex) {
+  if (smooth != "none") {
+    sm <- list(type = smooth, sigma = smooth_sigma, bins = smooth_bins, upsample = 8)
+    cells <- smooth_layer(smooth_field(m, sm), sm)
+    keep <- function(x, ...) x   # never drop the surface's edge pixels
+    scales <- list(
+      scale_x_continuous(expand = c(0, 0), limits = c(0.5, ncol(m) + 0.5), breaks = seq_len(ncol(m)), labels = colnames(m),
+                         oob = keep, position = if (label_position == "bottom") "bottom" else "top"),
+      scale_y_continuous(expand = c(0, 0), limits = c(0.5, nrow(m) + 0.5), breaks = seq_len(nrow(m)), labels = rev(rownames(m)),
+                         oob = keep)
+    )
+    mapping <- aes(x = .data$.col, y = .data$.row, fill = .data$.value)
+    sizes <- theme(panel.widths = grid::unit(ncol(m) * cell_size[1], "mm"),
+                   panel.heights = grid::unit(nrow(m) * cell_size[2], "mm"))
+  } else if (hex) {
     hx <- hex_extent(nrow(m), ncol(m))
     scales <- list(
       scale_x_continuous(expand = c(0, 0), limits = hx$xlim, breaks = seq_len(ncol(m)) + 0.25, labels = colnames(m),
@@ -115,6 +136,8 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
 
   if (categorical) {
     p <- p + scale_fill_calor_d(na.value = na_fill, na.translate = FALSE)
+  } else if (smooth == "contour") {
+    p <- p + scale_fill_viridis_d(option = "turbo") + labs(fill = "value")
   } else if (identical(palette, "auto")) {
     rng <- range(m, na.rm = TRUE)
     p <- p + if (rng[1] < 0 && rng[2] > 0) {
@@ -133,6 +156,7 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
     cell_size = cell_size,
     cell = list(shape = cell_shape, gap = cell_gap, radius = cell_radius, border = border,
                 raster = use_raster),
+    smooth = if (smooth != "none") list(type = smooth, sigma = smooth_sigma, bins = smooth_bins, upsample = 8),
     label_position = label_position,
     row_order = rownames(m),
     col_order = colnames(m),

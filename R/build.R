@@ -127,6 +127,15 @@ S7::method(ggplot_build, class_calor) <- function(plot, ...) {
   }
   base@data <- d
   base <- apply_interactive(base, st)
+  if (!is.null(st$smooth)) {
+    # Recompute the surface from the matrix in its final order.
+    mm <- st$matrix[lr$order, lc$order, drop = FALSE]
+    base@layers[[1]] <- smooth_layer(smooth_field(mm, st$smooth), st$smooth)
+    base@scales <- base@scales$clone()
+    ys <- base@scales$get_scales("y"); ys$labels <- rev(lr$order)
+    xs <- base@scales$get_scales("x"); xs$labels <- lc$order
+    if (identical(st$label_position, "auto") && lc$show_tree) xs$position <- "bottom"
+  }
 
   if (!is.null(st$text)) {
     tx <- st$text

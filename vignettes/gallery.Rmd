@@ -77,8 +77,8 @@ ggcalor(mut, cell_size = c(3, 6), cell_gap = 0.15, border = NA, na_fill = "grey9
 
 ## Correlation matrix
 
-Order first, then mask the upper triangle. Circle area follows the absolute
-correlation and masked cells are hidden with a transparent `na_fill`.
+Order first, then mask the upper triangle. Masked cells are hidden with a
+transparent `na_fill`, and the values sit in the cells.
 
 ```{r correlation, fig.width = 5, fig.height = 5}
 x <- matrix(rnorm(300), 50, 6, dimnames = list(NULL, paste0("v", 1:6)))
@@ -87,26 +87,9 @@ cm <- cor(x)
 o <- hclust(dist(cm))$order
 cm <- cm[o, o]
 
-ggcalor(cm, cell_size = 9, mask = upper.tri(cm), cell_shape = "circle",
-        cell_area = abs(cm), border = NA, na_fill = NA) +
+ggcalor(cm, cell_size = 9, mask = upper.tri(cm), cell_gap = 0.08, border = NA, na_fill = NA) +
   calor_text(digits = 2, size = 6) +
   labs(fill = "r")
-```
-
-## Dot plot
-
-Fill carries one matrix and cell area another, the single-cell dot plot.
-
-```{r dotplot, fig.width = 5, fig.height = 5}
-mean_expr <- matrix(runif(60, 0, 3), 10, 6,
-                    dimnames = list(paste0("gene", 1:10), paste0("cluster", 1:6)))
-pct_expr <- matrix(runif(60), 10, 6)
-
-ggcalor(mean_expr, cell_shape = "circle", cell_size = 6, cell_area = pct_expr,
-        border = "grey40") +
-  calor_dendro(rows = TRUE) +
-  calor_order(cols = "mean") +
-  labs(fill = "mean")
 ```
 
 ## Calendar heatmaps
@@ -132,6 +115,52 @@ ggcalor(crashes, rows = "month", cols = "hour", value = "pct",
         cell_size = 4, cell_gap = 0.12) +
   coord_radial(inner.radius = 0.3, expand = FALSE, r.axis.inside = TRUE) +
   scale_fill_fermenter(palette = "BuPu", direction = 1, n.breaks = 6)
+```
+
+## Radial ring of categories
+
+Many thin columns around a wide ring make the wedges read as squares. Empty
+cells stay white with the grid showing, and the legend sits in the hole.
+
+```{r ring, fig.width = 7, fig.height = 7}
+countries <- paste0("Country ", sprintf("%03d", 1:130))
+ring <- matrix(NA_character_, 12, 130, dimnames = list(month.abb, countries))
+for (j in 1:130) {
+  idx <- sample(12, rbinom(1, 12, 0.35))
+  ring[idx, j] <- sample(c("Data", "Visualization", "Society"), length(idx), TRUE)
+}
+
+ggcalor(ring, cell_size = 2.4, border = "grey85", na_fill = "white", labels = "cols") +
+  coord_radial(inner.radius = 0.45, expand = FALSE, rotate.angle = TRUE) +
+  scale_fill_manual(values = c(Data = "#f2c200", Visualization = "#e03b3b", Society = "#4a7bd0"),
+                    na.translate = FALSE) +
+  theme(axis.text.x = element_text(size = 4.5), panel.grid = element_blank(),
+        legend.position = "inside", legend.position.inside = c(0.5, 0.5),
+        legend.direction = "horizontal", legend.title = element_blank(),
+        legend.key.size = grid::unit(3, "mm"), legend.text = element_text(size = 7))
+```
+
+## Smooth surfaces
+
+`smooth = "contour"` interpolates the matrix onto a fine grid, blurs it, and
+draws filled contour bands. `smooth = "raster"` draws the same surface as a
+continuous image, and trees and tracks still align to the underlying rows and
+columns.
+
+```{r surface, fig.width = 7, fig.height = 5}
+f <- outer(1:30, 1:45, function(i, j) sin(i / 4) * cos(j / 6) + 0.6 * sin((i + j) / 5))
+f <- f + matrix(rnorm(length(f), sd = 0.25), nrow(f))
+dimnames(f) <- list(paste0("r", 1:30), paste0("c", 1:45))
+
+ggcalor(f, cell_size = 3, smooth = "contour", smooth_sigma = 1.5, smooth_bins = 8,
+        labels = "none") +
+  scale_fill_manual(values = c("#1b4d8f", "#2a9df4", "#3cb44b", "#bfef45",
+                               "#ffe119", "#f58231", "#e6194b", "#c71585"))
+```
+
+```{r surface-raster, fig.width = 6, fig.height = 6}
+ggcalor(f[1:20, 1:20], cell_size = 4, smooth = "raster") +
+  calor_dendro(rows = TRUE, cols = TRUE)
 ```
 
 ## Hex cells

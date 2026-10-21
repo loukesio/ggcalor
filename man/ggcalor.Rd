@@ -22,6 +22,9 @@ ggcalor(
   palette = "auto",
   raster = c("auto", "never", "always"),
   raster_threshold = 20000,
+  smooth = c("none", "contour", "raster"),
+  smooth_sigma = 1,
+  smooth_bins = 9,
   labels = c("both", "rows", "cols", "none"),
   label_position = c("auto", "top", "bottom")
 )
@@ -66,6 +69,14 @@ more than \code{raster_threshold} cells, \code{"always"} or \code{"never"}. Rast
 have no gap, border or shape.}
 
 \item{raster_threshold}{Cell count above which \code{"auto"} rasterises.}
+
+\item{smooth}{\code{"none"} draws cells. \code{"contour"} interpolates and blurs the
+matrix into a surface drawn as filled contour bands; \code{"raster"} draws the
+same surface as a continuous image. Dendrograms and tracks still align.}
+
+\item{smooth_sigma}{Blur radius in cells.}
+
+\item{smooth_bins}{Number of contour bands.}
 
 \item{labels}{Which labels to show: \code{"both"}, \code{"rows"}, \code{"cols"} or \code{"none"}.}
 
