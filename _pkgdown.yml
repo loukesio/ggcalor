@@ -7,13 +7,17 @@ navbar:
   structure:
     left: [intro, reference, articles]
     right: [github]
+figures:
+  bg: white
+  dev: ragg::agg_png
+
 reference:
   - title: Build a heatmap
     contents: [ggcalor, geom_cell, theme_calor, scale_fill_calor_d, calor_colourbar, calor_scale, calor_matrix]
   - title: Order, cluster, split
     contents: [calor_order, calor_dendro, calor_split, calor_order_of]
   - title: Decorate
-    contents: [calor_anno, calor_margin, calor_bracket, calor_text, calor_legend]
+    contents: [calor_anno, calor_margin, calor_bracket, calor_text, calor_legend, calor_labels]
   - title: Interact and save
     contents: [calor_interactive, calor_girafe, calor_save, calor_size]
   - title: Other cell grids

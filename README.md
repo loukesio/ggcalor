@@ -121,6 +121,21 @@ Save at the plot's natural size, computed from the cells, tracks and legend:
 calor_save(p, "heatmap.pdf")
 ```
 
+## Styling
+
+Every ggcalor plot is a ggplot: `+ theme()`, `+ scale_fill_*()` and
+`+ labs()` all work. The verbs take their colours and sizes as arguments,
+and `calor_labels()` sets where the names go and how all text looks:
+
+```r
+ggcalor(m) +
+  calor_anno(top = meta, colours = list(group = c(A = "#1b9e77", B = "#d95f02"))) +
+  calor_margin(right = "mean", fill = "steelblue", size = 12) +
+  calor_labels(rows = "left", cols = "bottom", angle = 45, face = "italic", family = "Helvetica") +
+  scale_fill_distiller(palette = "RdYlBu") +
+  theme(legend.position = "bottom")
+```
+
 ## Verbs
 
 | Verb | What it does |
@@ -134,6 +149,7 @@ calor_save(p, "heatmap.pdf")
 | `calor_text(digits)` | Values written in the cells |
 | `calor_bracket(cols, rows)` | Brackets with labels over groups |
 | `calor_legend("histogram")` | Histogram of values in place of the colour bar |
+| `calor_labels(rows, cols, size, colour, face, angle)` | Where names go and how they look |
 | `calor_interactive()`, `calor_girafe(p)` | Tooltips and linked highlighting with 'ggiraph' |
 | `calor_radial(inner.radius)` | The grid as a ring, with readable labels and the legend in the hole |
 | `ggwaffle(counts)` | Unit chart on the same cell grid |

@@ -158,9 +158,9 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
   lim <- c(0.5, lay$L + 0.5)
   th <- theme_void() + theme(plot.margin = margin(0, 0, 0, 0))
   name_theme <- if (along_cols) {
-    theme(axis.title.y = element_text(size = 7, colour = "grey30", angle = 0, hjust = 1, vjust = 0.5, margin = margin(r = 2.5)))
+    theme(axis.title.y = element_text(size = 7, angle = 0, hjust = 1, vjust = 0.5, margin = margin(r = 2.5)))
   } else {
-    theme(axis.title.x = element_text(size = 7, colour = "grey30", angle = 90, hjust = 1, vjust = 0.5, margin = margin(t = 2.5)))
+    theme(axis.title.x = element_text(size = 7, angle = 90, hjust = 1, vjust = 0.5, margin = margin(t = 2.5)))
   }
   along_scale <- if (along_cols) scale_x_continuous(limits = lim, expand = c(0, 0))
                  else scale_y_continuous(limits = lim, expand = c(0, 0))
@@ -177,7 +177,7 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
     p <- p + geom_boxplot(width = 0.62, linewidth = 0.3, outlier.size = 0.3, outlier.alpha = 0.6,
                           fill = tr$colours %||% "grey88", colour = "grey25", staplewidth = 0.4,
                           orientation = if (along_cols) "x" else "y", na.rm = TRUE)
-    axis_bits <- value_axis(along_cols, tr$side)
+    axis_bits <- value_axis(along_cols, tr$side, integer = FALSE)
   } else {
     df <- data.frame(pos = pos, value = unname(tr$values[lay$order]))
     if (tr$type == "tile") {
@@ -228,7 +228,8 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
         line = geom_line(aes(group = 1), colour = fill, linewidth = 0.4, na.rm = TRUE),
         cli::cli_abort("Unknown annotation type {.val {tr$type}}.")
       )
-      axis_bits <- value_axis(along_cols, tr$side)
+      v <- df$value[is.finite(df$value)]
+      axis_bits <- value_axis(along_cols, tr$side, integer = length(v) && all(v == round(v)))
     }
   }
   # The complete theme goes first so the axis and name settings survive it.
@@ -244,17 +245,19 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
 
 # A small value axis for numeric tracks; bars on the left grow leftwards.
 # Three ticks at most, never dropped, with a thin axis line.
-value_axis <- function(along_cols, side) {
+value_axis <- function(along_cols, side, integer = FALSE) {
   brk <- function(n) function(lim) {
-    # Ask for more breaks until at least two land inside the limits.
-    for (k in n:(n + 3)) {
+    # Ask for more breaks until at least two land inside the limits; counts
+    # get whole numbers.
+    for (k in n:(n + 4)) {
       b <- scales::breaks_extended(n = k, only.loose = FALSE)(lim)
       b <- b[b >= lim[1] & b <= lim[2]]
+      if (integer) b <- b[b == round(b)]
       if (length(b) >= 2) break
     }
     b
   }
-  txt <- element_text(size = 5.5, colour = "grey30")
+  txt <- element_text(size = 5.5)
   line <- element_line(linewidth = 0.3, colour = "grey55")
   tick <- theme(axis.ticks.length = grid::unit(0.7, "mm"))
   if (along_cols) {
@@ -295,7 +298,9 @@ match_legend_theme <- function(p, main_theme) {
     e <- calc_element(el, main_theme)
     element_text(size = e$size, colour = e$colour, face = e$face, family = e$family)
   }
-  p + theme(legend.title = font("legend.title"),
+  ax <- calc_element("axis.text", main_theme)
+  p + theme(text = element_text(family = ax$family, colour = ax$colour),
+            legend.title = font("legend.title"),
             legend.text = font("legend.text"),
             legend.key.size = calc_element("legend.key.size", main_theme),
             legend.key.spacing = calc_element("legend.key.spacing", main_theme))

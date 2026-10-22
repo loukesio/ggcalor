@@ -9,7 +9,25 @@ vignette: >
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center",
-                      dpi = 200, fig.retina = 2, dev = "ragg_png", out.width = "100%", fig.width = 6, fig.height = 6)
+                      dpi = 200, fig.retina = 2, dev = "ragg_png", dev.args = list(bg = "white"),
+                      fig.width = 6, fig.height = 6,
+                      calor.autosize = TRUE)
+# Size each figure to its plot: ggcalor plots have a natural size in mm.
+knitr::opts_hooks$set(calor.autosize = function(options) {
+  if (!isTRUE(options$calor.autosize) || !isTRUE(options$eval)) return(options)
+  env <- new.env(parent = knitr::knit_global())
+  seed <- get0(".Random.seed", envir = globalenv(), inherits = FALSE)
+  res <- try(suppressMessages(eval(parse(text = options$code), envir = env)), silent = TRUE)
+  if (!is.null(seed)) assign(".Random.seed", seed, envir = globalenv())
+  if (inherits(res, "ggplot")) {
+    sz <- try(ggcalor::calor_size(res) / 25.4 + 0.15, silent = TRUE)
+    if (!inherits(sz, "try-error") && all(sz > 1)) {
+      options$fig.width <- sz[1]; options$fig.height <- sz[2]
+      options$out.width <- paste0(round(sz[1] * 96), "px")
+    }
+  }
+  options
+})
 ```
 
 ggcalor is a grammar of cells. Every chart below is the same grid with
@@ -23,7 +41,7 @@ set.seed(42)
 
 ## Expression matrix with trees, splits, annotations
 
-```{r expression, fig.width = 7, fig.height = 8}
+```{r expression}
 m <- matrix(rnorm(30 * 12), 30, 12,
             dimnames = list(paste0("gene_", 1:30), paste0("sample", 1:12)))
 m[1:10, 1:6] <- m[1:10, 1:6] + 2.5
@@ -58,11 +76,11 @@ str(calor_order_of(p))
 
 ## Oncoprint
 
-A categorical matrix gets a discrete fill. Clustering, ordering and margins
-then work on presence. The memo sort orders samples so those altered in the
+A categorical matrix gets a discrete fill; empty cells take `na_fill`.
+Clustering, ordering and margins then work on presence. The memo sort orders samples so those altered in the
 most frequent gene come first.
 
-```{r oncoprint, fig.width = 8, fig.height = 4}
+```{r oncoprint}
 genes <- c("TP53", "KRAS", "EGFR", "PIK3CA", "BRAF", "PTEN", "ALK", "MET")
 samples <- sprintf("S%02d", 1:40)
 mut <- matrix(NA_character_, 8, 40, dimnames = list(genes, samples))
@@ -87,7 +105,7 @@ ggcalor(mut, cell_size = c(3, 6), cell_gap = 0.15, border = NA, na_fill = "grey9
 Order first, then mask the upper triangle. Masked cells are hidden with a
 transparent `na_fill`, and the values sit in the cells.
 
-```{r correlation, fig.width = 5, fig.height = 5}
+```{r correlation}
 x <- matrix(rnorm(300), 50, 6, dimnames = list(NULL, paste0("v", 1:6)))
 x[, 2] <- x[, 1] + rnorm(50, sd = 0.5); x[, 4] <- -x[, 3] + rnorm(50, sd = 0.7)
 cm <- cor(x)
@@ -104,7 +122,7 @@ ggcalor(cm, cell_size = 9, mask = upper.tri(cm), cell_gap = 0.08, border = NA, n
 Long data goes straight in. A binned fill scale and gaps give the editorial
 look; `coord_radial()` turns the same grid into a ring.
 
-```{r calendar, fig.width = 8, fig.height = 4}
+```{r calendar}
 crashes <- expand.grid(month = month.abb, hour = sprintf("%02d", 0:23))
 crashes$pct <- with(crashes, 10 + 25 * (as.integer(hour) < 5) +
                       8 * (as.integer(hour) > 19) + runif(nrow(crashes), 0, 10))
@@ -117,7 +135,7 @@ ggcalor(crashes, rows = "month", cols = "hour", value = "pct",
         axis.text.x.top = element_text(angle = 0))
 ```
 
-```{r radial, fig.width = 6, fig.height = 6}
+```{r radial}
 ggcalor(crashes, rows = "month", cols = "hour", value = "pct",
         cell_size = 4, cell_gap = 0.12) +
   calor_radial(inner.radius = 0.3, legend = "outside") +
@@ -130,7 +148,7 @@ Long data goes straight in, one row per country and month. `calor_radial()`
 does the rest: labels radiate outward, the months sit in the gap, the legend
 is in the hole. The country names are real; the membership is simulated.
 
-```{r ring, fig.width = 7, fig.height = 7}
+```{r ring}
 ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
         cell_size = 2.4, border = "grey85", na_fill = "white") +
   calor_radial(inner.radius = 0.45) +
@@ -146,7 +164,7 @@ draws filled contour bands. `smooth = "raster"` draws the same surface as a
 continuous image, and trees and tracks still align to the underlying rows and
 columns.
 
-```{r surface, fig.width = 7, fig.height = 5}
+```{r surface}
 f <- outer(1:30, 1:45, function(i, j) sin(i / 4) * cos(j / 6) + 0.6 * sin((i + j) / 5))
 f <- f + matrix(rnorm(length(f), sd = 0.25), nrow(f))
 dimnames(f) <- list(paste0("r", 1:30), paste0("c", 1:45))
@@ -157,14 +175,14 @@ ggcalor(f, cell_size = 3, smooth = "contour", smooth_sigma = 1.5, smooth_bins = 
                                "#ffe119", "#f58231", "#e6194b", "#c71585"))
 ```
 
-```{r surface-raster, fig.width = 6, fig.height = 6}
+```{r surface-raster}
 ggcalor(f[1:20, 1:20], cell_size = 4, smooth = "raster") +
   calor_dendro(rows = TRUE, cols = TRUE)
 ```
 
 ## Hex cells
 
-```{r hex, fig.width = 7, fig.height = 4}
+```{r hex}
 hx <- t(apply(matrix(rnorm(12 * 20), 12, 20), 1, cumsum))
 dimnames(hx) <- list(paste0("r", 1:12), paste0("c", 1:20))
 
@@ -174,7 +192,7 @@ ggcalor(hx, cell_shape = "hex", cell_size = 5, cell_gap = 0.06) +
 
 ## Waffle
 
-```{r waffle, fig.width = 6, fig.height = 3}
+```{r waffle}
 pop <- data.frame(decile = rep(c("<100", "3K", "12K", "43K"), each = 4),
                   region = rep(c("Africa", "China", "India", "Europe"), 4),
                   share = c(60, 10, 25, 5, 30, 30, 30, 10, 10, 40, 20, 30, 5, 10, 5, 80))

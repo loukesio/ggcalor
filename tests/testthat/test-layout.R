@@ -61,3 +61,31 @@ test_that("cell shapes render", {
     expect_s3_class(ggplotGrob(p), "gtable")
   }
 })
+
+test_that("calor_labels() moves and styles names", {
+  m <- matrix(rnorm(40), 8, 5, dimnames = list(paste0("g", 1:8), paste0("s", 1:5)))
+  p <- ggcalor(m) + calor_labels(rows = "right", cols = "bottom", colour = "navy", angle = 45)
+  b <- ggplot2::ggplot_build(p)
+  expect_equal(b@plot@scales$get_scales("x")$position, "bottom")
+  expect_equal(b@plot@scales$get_scales("y")$position, "right")
+  expect_equal(ggplot2::calc_element("axis.text.y.right", b@plot@theme)$colour, "navy")
+  expect_equal(ggplot2::calc_element("axis.text.x.bottom", b@plot@theme)$angle, 45)
+  # Names hidden
+  p2 <- ggcalor(m) + calor_labels(rows = "none")
+  b2 <- ggplot2::ggplot_build(p2)
+  expect_s3_class(ggplot2::calc_element("axis.text.y.left", b2@plot@theme), "element_blank")
+  # With tracks the names move outside the outermost track and build still works
+  p3 <- ggcalor(m) + calor_anno(left = data.frame(k = rep(c("a", "b"), 4)), right = data.frame(v = 1:8)) +
+    calor_labels(rows = "left")
+  expect_s3_class(ggplot2::ggplotGrob(p3), "gtable")
+})
+
+test_that("tracks sit against the cells and count axes use whole numbers", {
+  m <- matrix(sample(0:5, 40, TRUE), 8, 5, dimnames = list(paste0("g", 1:8), paste0("s", 1:5)))
+  p <- ggcalor(m) + calor_margin(top = "sum")
+  expect_s3_class(ggplot2::ggplotGrob(p), "gtable")
+  ax <- value_axis(TRUE, "top", integer = TRUE)
+  b <- ax[[1]]$breaks(c(0, 5))
+  expect_true(all(b == round(b)))
+  expect_gte(length(b), 2)
+})

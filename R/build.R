@@ -137,6 +137,7 @@ S7::method(ggplot_build, class_calor) <- function(plot, ...) {
     if (identical(st$label_position, "auto") && lc$show_tree) xs$position <- "bottom"
   }
 
+  base <- apply_label_spec(base, st)
   if (!is.null(st$text)) {
     tx <- st$text
     base <- base + rlang::inject(geom_text(aes(label = .data$.label), size = tx$size / .pt,
@@ -205,11 +206,17 @@ S7::method(ggplot_gtable, class_calor_built) <- function(data, ...) {
   mt <- complete_theme(main@theme)
   main@scales <- main@scales$clone()
   xs <- main@scales$get_scales("x"); ys <- main@scales$get_scales("y")
-  x_side <- st$label_position
+  x_side <- st$labels$cols
+  if (identical(x_side, "auto")) x_side <- st$label_position
   if (identical(x_side, "auto")) {
     x_side <- if (length(top) && !length(bottom)) "bottom" else if (length(bottom) && !length(top)) "top" else "bottom"
   }
-  y_side <- if (length(left) && !length(right)) "right" else if (length(right)) "right" else "left"
+  y_side <- st$labels$rows
+  if (identical(y_side, "auto")) {
+    y_side <- if (length(left) && !length(right)) "right" else if (length(right)) "right" else "left"
+  }
+  if (x_side == "none") x_side <- "bottom"
+  if (y_side == "none") y_side <- "left"
   if (!is.null(xs)) xs$position <- x_side
   if (!is.null(ys)) ys$position <- y_side
   show_x <- !inherits(calc_element(paste0("axis.text.x.", x_side), mt), "element_blank")
@@ -249,6 +256,11 @@ S7::method(ggplot_gtable, class_calor_built) <- function(data, ...) {
   side_track <- function(p) patchwork::free(match_legend_theme(p, mt), type = "space", side = "b")
   left <- lapply(left, side_track); right <- lapply(right, side_track)
 
+  # The outer margin belongs to the whole composition; the cells keep only a
+  # hairline so tracks sit against them.
+  th <- main@theme
+  main <- main + theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, "mm"))
+
   pieces <- c(top, list(main), bottom, left, right)
   ids <- c(LETTERS, letters)[seq_along(pieces)]
   names(pieces) <- ids
@@ -264,9 +276,8 @@ S7::method(ggplot_gtable, class_calor_built) <- function(data, ...) {
   }, character(1)), collapse = ""), character(1))
   pw <- patchwork::wrap_plots(pieces, design = paste(design, collapse = "\n")) +
     patchwork::plot_layout(guides = "collect")
-  th <- main@theme
   keep <- intersect(c("plot.title", "plot.subtitle", "plot.caption", "text", "title",
-                      "plot.title.position", "plot.caption.position", "plot.background",
+                      "plot.title.position", "plot.caption.position", "plot.background", "plot.margin",
                       "legend.title", "legend.text", "legend.key.size", "legend.spacing.y"), names(th))
   pw <- pw + patchwork::plot_annotation(
     title = titles$title, subtitle = titles$subtitle, caption = titles$caption, theme = th[keep]

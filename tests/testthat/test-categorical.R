@@ -41,3 +41,15 @@ test_that("hex cells and cell_area render", {
   expect_s3_class(ggplotGrob(pa), "gtable")
   expect_error(ggcalor(m, cell_area = m[1:2, ]), "dimensions")
 })
+
+test_that("empty cells of a categorical matrix are painted with na_fill", {
+  m <- matrix(c("a", NA, "b", NA), 2, 2, dimnames = list(c("r1", "r2"), c("c1", "c2")))
+  p <- ggcalor(m, na_fill = "grey93")
+  d <- ggplot2::layer_data(p, 1)
+  expect_equal(nrow(d), 4)
+  expect_equal(sum(d$fill == "grey93"), 2)
+  # No NA key in the legend
+  b <- ggplot2::ggplot_build(p)
+  sc <- b@plot@scales$get_scales("fill")
+  expect_false(anyNA(sc$get_limits()))
+})

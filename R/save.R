@@ -43,8 +43,10 @@ calor_size <- function(plot) {
   if (is_calor(plot)) {
     st <- calor_state(plot)
     names <- unlist(lapply(c(st$anno$left, st$anno$right), function(tr) tr$name))
-    if (length(names) && any(nzchar(names)) && !length(st$anno$bottom)) {
-      sz[2] <- sz[2] + max(nchar(names)) * 7 * 0.55 / 72.27 * 25.4 + 2
+    if (length(names) && any(nzchar(names))) {
+      hang <- max(nchar(names)) * 7 * 0.55 / 72.27 * 25.4 + 2
+      below <- sum(vapply(st$anno$bottom, function(tr) tr$size %||% 4, numeric(1)))
+      sz[2] <- sz[2] + max(0, hang - below)
     }
   }
   sz

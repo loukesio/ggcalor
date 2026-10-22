@@ -135,7 +135,8 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
   if (labels %in% c("cols", "none")) p <- p + theme(axis.text.y = element_blank())
 
   if (categorical) {
-    p <- p + scale_fill_calor_d(na.value = na_fill, na.translate = FALSE)
+    # Keep NA out of the legend but still paint the cells.
+    p <- p + scale_fill_calor_d(na.value = na_fill, na.translate = TRUE, limits = function(l) l[!is.na(l)])
   } else if (smooth == "contour") {
     p <- p + scale_fill_viridis_d(option = "turbo") + labs(fill = "value")
   } else if (identical(palette, "auto")) {
@@ -167,6 +168,7 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
     anno = list(top = list(), bottom = list(), left = list(), right = list()),
     text = NULL,
     legend = list(type = "colourbar"),
+    labels = list(rows = "auto", cols = "auto", style = NULL),
     interactive = NULL
   ))
 }
