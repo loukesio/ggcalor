@@ -15,13 +15,13 @@ p <- ggcalor(m, cell_size = 4.5, scale = "row") +
              colours = list(condition = c(control = "grey70", treated = "firebrick"))) +
   calor_margin(right = "mean", bottom = "boxplot") +
   labs(title = "Expression, z-scored by gene", subtitle = "rows cut into three clusters")
-calor_save(p, "man/figures/readme-dendro.png", dpi = 150)
+calor_save(p, "man/figures/readme-dendro.png", dpi = 300)
 
 p2 <- ggcalor(m[1:12, ], cell_size = 7, cell_gap = 0.1) +
   calor_split(cols = samples$condition) +
   calor_dendro(rows = TRUE, cols = TRUE) +
   calor_text(digits = 1, size = 5)
-calor_save(p2, "man/figures/readme-split.png", dpi = 150)
+calor_save(p2, "man/figures/readme-split.png", dpi = 300)
 
 # Histogram legend, glyph track, brackets
 set.seed(11)
@@ -36,14 +36,14 @@ p3 <- ggcalor(m3, cell_size = 5, scale = "row") +
   calor_bracket(cols = source_grp, side = "bottom", angle = 90, size = 10) +
   calor_legend("histogram") +
   calor_margin(right = "sd")
-calor_save(p3, "man/figures/readme-legend.png", dpi = 150)
+calor_save(p3, "man/figures/readme-legend.png", dpi = 300)
 
 # Waffle
 pop <- data.frame(decile = rep(c("<100", "3K", "12K", "43K"), each = 4),
                   region = rep(c("Africa", "China", "India", "Europe"), 4),
                   share = c(60, 10, 25, 5, 30, 30, 30, 10, 10, 40, 20, 30, 5, 10, 5, 80))
 p4 <- ggwaffle(pop, "region", "share", by = "decile", n = 100, rows = 20, cell_size = 2.5)
-ggsave("man/figures/readme-waffle.png", p4, width = 6, height = 3, dpi = 150, bg = "white")
+ggsave("man/figures/readme-waffle.png", p4, width = 6, height = 3, dpi = 300, bg = "white")
 
 # Radial ring
 p5 <- ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
@@ -52,7 +52,7 @@ p5 <- ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
   scale_fill_manual(values = c(Data = "#f2c200", Visualization = "#e03b3b", Society = "#4a7bd0"),
                     na.translate = FALSE) +
   labs(fill = NULL)
-calor_save(p5, "man/figures/readme-radial.png", dpi = 150)
+calor_save(p5, "man/figures/readme-radial.png", dpi = 300)
 
 # Oncoprint
 set.seed(3)
@@ -69,7 +69,7 @@ p6 <- ggcalor(mut, cell_size = c(3, 6), cell_gap = 0.15, border = NA, na_fill = 
   calor_order(rows = "sum", cols = "memo") +
   calor_margin(right = "sum", top = "sum", size = 8) +
   labs(fill = "alteration")
-calor_save(p6, "man/figures/readme-oncoprint.png", dpi = 150)
+calor_save(p6, "man/figures/readme-oncoprint.png", dpi = 300)
 
 # Smooth surface
 set.seed(8)
@@ -79,4 +79,4 @@ dimnames(f) <- list(paste0("r", 1:30), paste0("c", 1:45))
 p7 <- ggcalor(f, cell_size = 3, smooth = "contour", smooth_sigma = 1.5, smooth_bins = 8, labels = "none") +
   scale_fill_manual(values = c("#1b4d8f", "#2a9df4", "#3cb44b", "#bfef45", "#ffe119", "#f58231", "#e6194b", "#c71585")) +
   theme(legend.position = "none")
-calor_save(p7, "man/figures/readme-surface.png", dpi = 150)
+calor_save(p7, "man/figures/readme-surface.png", dpi = 300)

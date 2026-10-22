@@ -156,15 +156,11 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
   pos <- lay$pos
   if (!along_cols) pos <- lay$L + 1 - pos  # rows run top to bottom
   lim <- c(0.5, lay$L + 0.5)
-  th <- theme_void() + theme(
-    plot.margin = margin(0, 0, 0, 0),
-    legend.key.size = grid::unit(3.5, "mm"),
-    legend.title = element_text(size = 8), legend.text = element_text(size = 7)
-  )
+  th <- theme_void() + theme(plot.margin = margin(0, 0, 0, 0))
   name_theme <- if (along_cols) {
-    theme(axis.title.y = element_text(size = 7, angle = 0, hjust = 1, vjust = 0.5, margin = margin(r = 2)))
+    theme(axis.title.y = element_text(size = 7, colour = "grey30", angle = 0, hjust = 1, vjust = 0.5, margin = margin(r = 2.5)))
   } else {
-    theme(axis.title.x = element_text(size = 7, angle = 90, hjust = 1, vjust = 0.5, margin = margin(t = 2)))
+    theme(axis.title.x = element_text(size = 7, colour = "grey30", angle = 90, hjust = 1, vjust = 0.5, margin = margin(t = 2.5)))
   }
   along_scale <- if (along_cols) scale_x_continuous(limits = lim, expand = c(0, 0))
                  else scale_y_continuous(limits = lim, expand = c(0, 0))
@@ -178,7 +174,8 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
     } else {
       ggplot(df, aes(y = .data$pos, x = .data$v, group = .data$pos))
     }
-    p <- p + geom_boxplot(width = 0.7, linewidth = 0.3, outlier.size = 0.4, fill = tr$colours %||% "grey85",
+    p <- p + geom_boxplot(width = 0.62, linewidth = 0.3, outlier.size = 0.3, outlier.alpha = 0.6,
+                          fill = tr$colours %||% "grey88", colour = "grey25", staplewidth = 0.4,
                           orientation = if (along_cols) "x" else "y", na.rm = TRUE)
     axis_bits <- value_axis(along_cols, tr$side)
   } else {
@@ -219,8 +216,14 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
     } else {
       fill <- tr$colours %||% "grey45"
       p <- if (along_cols) ggplot(df, aes(x = .data$pos, y = .data$value)) else ggplot(df, aes(y = .data$pos, x = .data$value))
+      rng <- range(df$value, na.rm = TRUE)
+      if (tr$type == "bar" && rng[1] < 0 && rng[2] > 0) {
+        # A baseline makes bars on both sides of zero readable.
+        p <- p + if (along_cols) geom_hline(yintercept = 0, colour = "grey60", linewidth = 0.3)
+                 else geom_vline(xintercept = 0, colour = "grey60", linewidth = 0.3)
+      }
       p <- p + switch(tr$type,
-        bar = geom_col(width = 1, fill = fill, colour = NA, orientation = if (along_cols) "x" else "y", na.rm = TRUE),
+        bar = geom_col(width = 0.72, fill = fill, colour = NA, orientation = if (along_cols) "x" else "y", na.rm = TRUE),
         point = geom_point(size = 1, colour = fill, na.rm = TRUE),
         line = geom_line(aes(group = 1), colour = fill, linewidth = 0.4, na.rm = TRUE),
         cli::cli_abort("Unknown annotation type {.val {tr$type}}.")
@@ -236,27 +239,66 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
   } else {
     theme(panel.heights = grid::unit(lay$L * cell_mm, "mm"), panel.widths = grid::unit(tr$size, "mm"))
   }
-  p <- p + size_theme
-  # Let the rotated names of row tracks spill into the empty corner cells
-  # instead of pushing the bottom tracks away from the heatmap.
-  if (!along_cols) patchwork::free(p, type = "space", side = "b") else p
+  p + size_theme
 }
 
 # A small value axis for numeric tracks; bars on the left grow leftwards.
+# Three ticks at most, never dropped, with a thin axis line.
 value_axis <- function(along_cols, side) {
-  tick <- theme(axis.ticks.length = grid::unit(0.8, "mm"), axis.ticks = element_line(linewidth = 0.3, colour = "grey40"))
-  if (along_cols) {
-    list(scale_y_continuous(expand = expansion(mult = c(0, 0.08)), n.breaks = 3),
-         theme(axis.text.y = element_text(size = 6, hjust = 1, margin = margin(r = 1))), tick)
-  } else if (side == "left") {
-    list(scale_x_reverse(expand = expansion(mult = c(0.08, 0)), n.breaks = 2,
-                         guide = guide_axis(check.overlap = TRUE)),
-         theme(axis.text.x = element_text(size = 5.5, margin = margin(t = 1))), tick)
-  } else {
-    list(scale_x_continuous(expand = expansion(mult = c(0, 0.08)), n.breaks = 2,
-                            guide = guide_axis(check.overlap = TRUE)),
-         theme(axis.text.x = element_text(size = 5.5, margin = margin(t = 1))), tick)
+  brk <- function(n) function(lim) {
+    # Ask for more breaks until at least two land inside the limits.
+    for (k in n:(n + 3)) {
+      b <- scales::breaks_extended(n = k, only.loose = FALSE)(lim)
+      b <- b[b >= lim[1] & b <= lim[2]]
+      if (length(b) >= 2) break
+    }
+    b
   }
+  txt <- element_text(size = 5.5, colour = "grey30")
+  line <- element_line(linewidth = 0.3, colour = "grey55")
+  tick <- theme(axis.ticks.length = grid::unit(0.7, "mm"))
+  if (along_cols) {
+    list(scale_y_continuous(expand = expansion(mult = c(0.02, 0.08)), breaks = brk(3)),
+         theme(axis.text.y = txt, axis.text.y.left = element_text(hjust = 1, margin = margin(r = 1)),
+               axis.ticks.y = line, axis.line.y = line), tick)
+  } else if (side == "left") {
+    list(scale_x_reverse(expand = expansion(mult = c(0.08, 0.02)), breaks = brk(3)),
+         theme(axis.text.x = txt, axis.text.x.bottom = element_text(margin = margin(t = 1)),
+               axis.ticks.x = line, axis.line.x = line), tick)
+  } else {
+    list(scale_x_continuous(expand = expansion(mult = c(0.02, 0.08)), breaks = brk(3)),
+         theme(axis.text.x = txt, axis.text.x.bottom = element_text(margin = margin(t = 1)),
+               axis.ticks.x = line, axis.line.x = line), tick)
+  }
+}
+
+# Put the heatmap's row or column names on the outer edge of a track, so
+# names sit outside the tracks and the tracks touch the cells.
+place_labels <- function(p, lay, side, main_theme) {
+  along_cols <- side %in% c("top", "bottom")
+  pos <- if (along_cols) lay$pos else lay$L + 1 - lay$pos
+  p@scales <- p@scales$clone()
+  sc <- p@scales$get_scales(if (along_cols) "x" else "y")
+  if (is.null(sc)) return(p)
+  sc$breaks <- pos
+  sc$labels <- lay$order
+  sc$position <- side
+  el <- paste0("axis.text.", if (along_cols) "x." else "y.", side)
+  args <- stats::setNames(list(calc_element(el, main_theme)), el)
+  p + rlang::inject(theme(!!!args))
+}
+
+# Give a track the main plot's legend typography so collected legends match.
+match_legend_theme <- function(p, main_theme) {
+  # Only size, colour and face: the guide keeps its own alignment defaults.
+  font <- function(el) {
+    e <- calc_element(el, main_theme)
+    element_text(size = e$size, colour = e$colour, face = e$face, family = e$family)
+  }
+  p + theme(legend.title = font("legend.title"),
+            legend.text = font("legend.text"),
+            legend.key.size = calc_element("legend.key.size", main_theme),
+            legend.key.spacing = calc_element("legend.key.spacing", main_theme))
 }
 
 #' Group brackets

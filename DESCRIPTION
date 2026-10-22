@@ -22,6 +22,7 @@ Imports:
     grid,
     rlang,
     cli,
+    scales,
     stats,
     grDevices
 Suggests:

@@ -38,29 +38,47 @@ apply_histogram_legend <- function(main, st) {
   lim <- sc$get_limits()
   v <- pmin(pmax(v, lim[1]), lim[2])
   h <- graphics::hist(v, breaks = seq(lim[1], lim[2], length.out = lg$bins + 1), plot = FALSE)
-  bars <- data.frame(x = h$mids, y = h$counts, w = diff(h$breaks), fill = sc$map(h$mids))
-  xs <- seq(lim[1], lim[2], length.out = 128)
-  strip_h <- max(h$counts) * 0.18
-  strip <- data.frame(x = xs, fill = sc$map(xs))
+  nb <- length(h$breaks)
+  bars <- data.frame(xmin = h$breaks[-nb], xmax = h$breaks[-1], y = h$counts, fill = sc$map(h$mids))
+  xs <- seq(lim[1], lim[2], length.out = 129)
+  strip_h <- max(h$counts) * 0.16
+  strip <- data.frame(xmin = xs[-129], xmax = xs[-1], fill = sc$map((xs[-129] + xs[-1]) / 2))
   br <- sc$get_breaks(); br <- br[!is.na(br)]
   labels <- sc$get_labels(br)
+  count_breaks <- function(l) {
+    b <- scales::breaks_extended(n = 3)(c(0, l[2]))
+    b[b > 0 & b <= l[2]]
+  }
+  mt <- complete_theme(main@theme)
+  txt <- calc_element("legend.text", mt)
+  txt$size <- txt$size * 0.85
+  line <- element_line(colour = "grey55", linewidth = 0.3)
   p <- ggplot() +
-    geom_col(data = bars, aes(x = .data$x, y = .data$y, fill = .data$fill, width = .data$w), colour = NA) +
-    geom_tile(data = strip, aes(x = .data$x, y = -strip_h / 2, fill = .data$fill),
-              width = diff(xs)[1] * 1.05, height = strip_h, colour = NA) +
+    # Outlines in the fill colour close the hairline seams between bins.
+    geom_rect(data = bars, aes(xmin = .data$xmin, xmax = .data$xmax, ymin = 0, ymax = .data$y, fill = .data$fill),
+              colour = bars$fill, linewidth = 0.2) +
+    geom_rect(data = strip, aes(xmin = .data$xmin, xmax = .data$xmax, fill = .data$fill),
+              ymin = -strip_h, ymax = 0, colour = strip$fill, linewidth = 0.2) +
+    annotate("segment", x = lim[1], xend = lim[2], y = 0, yend = 0, colour = "white", linewidth = 0.4) +
     scale_fill_identity() +
     scale_x_continuous(breaks = br, labels = labels, limits = lim, expand = c(0, 0)) +
-    scale_y_continuous(limits = c(-strip_h, max(h$counts) * 1.05), expand = c(0, 0)) +
+    scale_y_continuous(limits = c(-strip_h, max(h$counts) * 1.04), breaks = count_breaks,
+                       expand = c(0, 0), name = "count") +
     theme_void() +
-    theme(axis.text.x = element_text(size = 6.5, colour = "grey20", margin = margin(t = 1)),
-          axis.ticks.x = element_line(colour = "grey40", linewidth = 0.3),
-          axis.ticks.length.x = grid::unit(0.8, "mm"),
+    theme(axis.text.x = txt, axis.text.x.bottom = element_text(margin = margin(t = 1)),
+          axis.text.y = txt, axis.text.y.left = element_text(hjust = 1, margin = margin(r = 1)),
+          axis.title.y = element_text(size = txt$size, colour = txt$colour, angle = 90, margin = margin(r = 2)),
+          axis.ticks = line, axis.line.y = line,
+          axis.ticks.length = grid::unit(0.7, "mm"),
           panel.widths = grid::unit(lg$width, "mm"), panel.heights = grid::unit(lg$height, "mm"),
-          plot.margin = margin(1, 2, 1, 2))
+          plot.margin = margin(0, 1, 0, 0))
   title <- main@labels$fill %||% "value"
   if (is.function(title)) title <- title("value")
+  gt <- ggplotGrob(p)
+  w <- sum(grid::convertWidth(gt$widths, "mm", valueOnly = TRUE))
+  hh <- sum(grid::convertHeight(gt$heights, "mm", valueOnly = TRUE))
   main + guides(fill = "none", custom = guide_custom(
-    ggplotGrob(p), title = title,
-    width = grid::unit(lg$width + 4, "mm"), height = grid::unit(lg$height + 5, "mm")
+    gt, title = title, order = 1,
+    width = grid::unit(w, "mm"), height = grid::unit(hh, "mm")
   ))
 }

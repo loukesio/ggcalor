@@ -167,12 +167,6 @@ S7::method(ggplot_build, class_calor) <- function(plot, ...) {
   # Labels that cannot fit in the cell height or width are dropped.
   if (lr$cell_mm < 2) base <- base + theme(axis.text.y = element_blank())
   if (lc$cell_mm < 2) base <- base + theme(axis.text.x = element_blank())
-  # With a column tree on top, labels read better underneath the cells.
-  if (identical(st$label_position, "auto") && lc$show_tree) {
-    base@scales <- base@scales$clone()
-    xs <- base@scales$get_scales("x")
-    if (!is.null(xs)) xs$position <- "bottom"
-  }
   built <- ggplot2::ggplot_build(base)
   class_calor_built(built, calor = c(st, list(plot = base)))
 }
@@ -206,6 +200,55 @@ S7::method(ggplot_gtable, class_calor_built) <- function(data, ...) {
   titles <- Filter(Negate(is.null), lab[intersect(c("title", "subtitle", "caption"), names(lab))])
   if (length(titles)) main <- main + labs(title = NULL, subtitle = NULL, caption = NULL)
 
+  # Tracks touch the cells; row and column names move to the outer edge of
+  # the outermost track on their side, or to the free side if there is one.
+  mt <- complete_theme(main@theme)
+  main@scales <- main@scales$clone()
+  xs <- main@scales$get_scales("x"); ys <- main@scales$get_scales("y")
+  x_side <- st$label_position
+  if (identical(x_side, "auto")) {
+    x_side <- if (length(top) && !length(bottom)) "bottom" else if (length(bottom) && !length(top)) "top" else "bottom"
+  }
+  y_side <- if (length(left) && !length(right)) "right" else if (length(right)) "right" else "left"
+  if (!is.null(xs)) xs$position <- x_side
+  if (!is.null(ys)) ys$position <- y_side
+  show_x <- !inherits(calc_element(paste0("axis.text.x.", x_side), mt), "element_blank")
+  show_y <- !inherits(calc_element(paste0("axis.text.y.", y_side), mt), "element_blank")
+  # Brackets wrap the names, so names go on the outermost track that is not
+  # a bracket; with only brackets on a side they stay on the cells.
+  types <- function(side) c(if (side == "top" && lc$show_tree) "tree", if (side == "left" && lr$show_tree) "tree",
+                            vapply(st$anno[[side]], function(tr) tr$type, character(1)))
+  outer <- function(side, from_end) {
+    ok <- which(types(side) != "bracket")
+    if (!length(ok)) return(NULL)
+    if (from_end) max(ok) else min(ok)
+  }
+  i <- if (show_x && x_side == "top") outer("top", FALSE)
+  if (!is.null(i)) {
+    top[[i]] <- place_labels(top[[i]], lc, "top", mt)
+    main <- main + theme(axis.text.x.top = element_blank())
+  }
+  i <- if (show_x && x_side == "bottom") outer("bottom", TRUE)
+  if (!is.null(i)) {
+    bottom[[i]] <- place_labels(bottom[[i]], lc, "bottom", mt)
+    main <- main + theme(axis.text.x.bottom = element_blank())
+  }
+  i <- if (show_y && y_side == "left") outer("left", FALSE)
+  if (!is.null(i)) {
+    left[[i]] <- place_labels(left[[i]], lr, "left", mt)
+    main <- main + theme(axis.text.y.left = element_blank())
+  }
+  i <- if (show_y && y_side == "right") outer("right", TRUE)
+  if (!is.null(i)) {
+    right[[i]] <- place_labels(right[[i]], lr, "right", mt)
+    main <- main + theme(axis.text.y.right = element_blank())
+  }
+  top <- lapply(top, match_legend_theme, mt); bottom <- lapply(bottom, match_legend_theme, mt)
+  # Row tracks: let rotated names spill into the empty corners instead of
+  # pushing the bottom tracks away from the heatmap.
+  side_track <- function(p) patchwork::free(match_legend_theme(p, mt), type = "space", side = "b")
+  left <- lapply(left, side_track); right <- lapply(right, side_track)
+
   pieces <- c(top, list(main), bottom, left, right)
   ids <- c(LETTERS, letters)[seq_along(pieces)]
   names(pieces) <- ids
@@ -221,13 +264,12 @@ S7::method(ggplot_gtable, class_calor_built) <- function(data, ...) {
   }, character(1)), collapse = ""), character(1))
   pw <- patchwork::wrap_plots(pieces, design = paste(design, collapse = "\n")) +
     patchwork::plot_layout(guides = "collect")
-  if (length(titles)) {
-    th <- main@theme
-    pw <- pw + patchwork::plot_annotation(
-      title = titles$title, subtitle = titles$subtitle, caption = titles$caption,
-      theme = th[intersect(c("plot.title", "plot.subtitle", "plot.caption", "text", "title",
-                             "plot.title.position", "plot.caption.position"), names(th))]
-    )
-  }
+  th <- main@theme
+  keep <- intersect(c("plot.title", "plot.subtitle", "plot.caption", "text", "title",
+                      "plot.title.position", "plot.caption.position", "plot.background",
+                      "legend.title", "legend.text", "legend.key.size", "legend.spacing.y"), names(th))
+  pw <- pw + patchwork::plot_annotation(
+    title = titles$title, subtitle = titles$subtitle, caption = titles$caption, theme = th[keep]
+  )
   patchwork::patchworkGrob(pw)
 }

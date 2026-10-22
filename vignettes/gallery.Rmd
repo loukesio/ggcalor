@@ -9,7 +9,7 @@ vignette: >
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center",
-                      dpi = 110, dev = "png", out.width = "100%", fig.width = 6, fig.height = 6)
+                      dpi = 200, fig.retina = 2, dev = "ragg_png", out.width = "100%", fig.width = 6, fig.height = 6)
 ```
 
 ggcalor is a grammar of cells. Every chart below is the same grid with
@@ -41,6 +41,13 @@ ggcalor(m, cell_size = 4.5, scale = "row") +
   calor_margin(right = "mean", bottom = "boxplot") +
   calor_legend("histogram")
 ```
+
+Tracks always touch the cells; row and column names move to the outside.
+`calor_margin()` summarises each row or column in place: here a bar of the
+row means on the right and a boxplot of every column at the bottom.
+`calor_legend("histogram")` replaces the colour bar with a histogram of the
+values painted in the fill scale, so the legend also shows how the data
+fills that scale.
 
 The final order is available for reuse:
 

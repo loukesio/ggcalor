@@ -183,13 +183,20 @@ theme_calor <- function(base_size = 10, base_family = "") {
     theme(
       panel.grid = element_blank(),
       axis.ticks = element_blank(),
-      axis.text.y = element_text(hjust = 1, margin = margin(r = 3)),
-      axis.text.x.top = element_text(angle = 90, hjust = 0, vjust = 0.5, margin = margin(b = 3)),
-      axis.text.x.bottom = element_text(angle = 90, hjust = 1, vjust = 0.5, margin = margin(t = 3)),
+      axis.text = element_text(size = rel(0.8), colour = "grey20"),
+      axis.text.y.left = element_text(hjust = 1, margin = margin(r = 2.5)),
+      axis.text.y.right = element_text(hjust = 0, margin = margin(l = 2.5)),
+      axis.text.x.top = element_text(angle = 90, hjust = 0, vjust = 0.5, margin = margin(b = 2.5)),
+      axis.text.x.bottom = element_text(angle = 90, hjust = 1, vjust = 0.5, margin = margin(t = 2.5)),
       legend.key.size = grid::unit(4, "mm"),
-      strip.text = element_text(size = 8, colour = "grey20"),
-      strip.background = element_rect(fill = "grey93", colour = NA),
+      legend.title = element_text(size = rel(0.9), colour = "grey10"),
+      legend.text = element_text(size = rel(0.8), colour = "grey20"),
+      legend.spacing.y = grid::unit(3, "mm"),
+      strip.text = element_text(size = rel(0.75), colour = "grey45", margin = margin(2, 2, 2, 2)),
+      strip.background = element_blank(),
       strip.text.y = element_text(angle = -90),
+      strip.placement = "outside",
+      plot.background = element_rect(fill = "white", colour = NA),
       plot.margin = margin(5, 5, 5, 5)
     )
 }
@@ -219,5 +226,5 @@ hex_extent <- function(nrow, ncol) {
 #' @export
 calor_colourbar <- function(height = 45, width = 3.5, ...) {
   guide_colourbar(theme = theme(legend.key.height = grid::unit(height, "mm"),
-                                legend.key.width = grid::unit(width, "mm")), ...)
+                                legend.key.width = grid::unit(width, "mm")), order = 1, ...)
 }

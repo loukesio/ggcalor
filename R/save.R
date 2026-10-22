@@ -38,5 +38,14 @@ calor_size <- function(plot) {
     pad <- longest * size_pt * 0.5 / 72.27 * 25.4 + 1
     sz <- sz + 2 * pad
   }
+  # Rotated names of row tracks hang below the layout (patchwork::free), so
+  # they are not in the gtable heights; make room for the longest one.
+  if (is_calor(plot)) {
+    st <- calor_state(plot)
+    names <- unlist(lapply(c(st$anno$left, st$anno$right), function(tr) tr$name))
+    if (length(names) && any(nzchar(names)) && !length(st$anno$bottom)) {
+      sz[2] <- sz[2] + max(nchar(names)) * 7 * 0.55 / 72.27 * 25.4 + 2
+    }
+  }
   sz
 }
