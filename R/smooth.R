@@ -41,10 +41,18 @@ smooth_field <- function(m, sm) {
 
 smooth_layer <- function(field, sm) {
   if (sm$type == "contour") {
-    geom_contour_filled(data = field, aes(x = .data$x, y = .data$y, z = .data$z),
-                        bins = sm$bins, inherit.aes = FALSE, colour = NA)
+    # Round break values, so bands read "100-120" rather than "(99.0, 111]".
+    geom_contour_filled(data = field, aes(x = .data$x, y = .data$y, z = .data$z,
+                                          fill = after_stat(band_labels(.data$level))),
+                        breaks = pretty(range(field$z), sm$bins), inherit.aes = FALSE, colour = NA)
   } else {
     geom_raster(data = field, aes(x = .data$x, y = .data$y, fill = .data$z),
                 inherit.aes = FALSE, interpolate = TRUE)
   }
+}
+
+# "(100,120]" -> "100-120" (en dash), keeping the band order.
+band_labels <- function(level) {
+  levels(level) <- sub("^[[(]\\s*([^,]+),\\s*([^])]+)[])]$", "\\1\u2013\\2", levels(level))
+  level
 }

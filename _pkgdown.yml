@@ -17,13 +17,13 @@ reference:
   - title: Order, cluster, split
     contents: [calor_order, calor_dendro, calor_split, calor_order_of]
   - title: Decorate
-    contents: [calor_anno, calor_margin, calor_bracket, calor_text, calor_legend, calor_labels]
+    contents: [calor_anno, calor_margin, calor_panel, calor_bracket, calor_text, calor_legend, calor_labels]
   - title: Interact and save
     contents: [calor_interactive, calor_girafe, calor_save, calor_size]
   - title: Other cell grids
     contents: [calor_radial, ggwaffle]
   - title: Data
-    contents: [dvs_members]
+    contents: [measles, luad_alterations, dvs_members]
   - title: Internals
     contents: [class_calor, is_calor]
 articles:

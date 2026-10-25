@@ -32,7 +32,9 @@ Suggests:
     htmlwidgets,
     knitr,
     rmarkdown,
-    withr
+    withr,
+    vegan,
+    palmerpenguins
 Config/testthat/edition: 3
 LazyData: true
 VignetteBuilder: knitr

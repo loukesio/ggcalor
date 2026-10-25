@@ -110,6 +110,8 @@ S7::method(ggplot_build, class_calor) <- function(plot, ...) {
   st <- resolve_layout(calor_state(plot))
   lr <- st$lay$rows; lc <- st$lay$cols
   base <- as_plain_ggplot(plot)
+  if (!is.null(st$fill_scale) && !base@scales$has_scale("fill")) base <- base + st$fill_scale
+  base <- apply_na_fill(base, st$na_fill)
   d <- base@data
   d$.row <- factor(as.character(d$.row), levels = lr$order)
   d$.col <- factor(as.character(d$.col), levels = lc$order)
@@ -251,6 +253,12 @@ S7::method(ggplot_gtable, class_calor_built) <- function(data, ...) {
     main <- main + theme(axis.text.y.right = element_blank())
   }
   top <- lapply(top, match_legend_theme, mt); bottom <- lapply(bottom, match_legend_theme, mt)
+  # A calor_panel()'s value axis spills into the empty corner instead of
+  # pushing the heatmap away from the row tracks.
+  free_panels <- function(ps, side) Map(function(p, ty) {
+    if (ty == "panel") patchwork::free(p, type = "space", side = "l") else p
+  }, ps, types(side))
+  top <- free_panels(top, "top"); bottom <- free_panels(bottom, "bottom")
   # Row tracks: let rotated names spill into the empty corners instead of
   # pushing the bottom tracks away from the heatmap.
   side_track <- function(p) patchwork::free(match_legend_theme(p, mt), type = "space", side = "b")
@@ -278,9 +286,21 @@ S7::method(ggplot_gtable, class_calor_built) <- function(data, ...) {
     patchwork::plot_layout(guides = "collect")
   keep <- intersect(c("plot.title", "plot.subtitle", "plot.caption", "text", "title",
                       "plot.title.position", "plot.caption.position", "plot.background", "plot.margin",
-                      "legend.title", "legend.text", "legend.key.size", "legend.spacing.y"), names(th))
+                      "legend.title", "legend.text", "legend.key.size", "legend.spacing.y",
+                      "legend.position", "legend.direction", "legend.justification"), names(th))
   pw <- pw + patchwork::plot_annotation(
     title = titles$title, subtitle = titles$subtitle, caption = titles$caption, theme = th[keep]
   )
   patchwork::patchworkGrob(pw)
+}
+
+# A user's scale_fill_*() keeps ggplot2's grey50 for NA unless told otherwise;
+# paint missing and masked cells with `na_fill` instead.
+apply_na_fill <- function(base, na_fill) {
+  sc <- base@scales$get_scales("fill")
+  if (is.null(sc) || is.null(na_fill) || !identical(sc$na.value, "grey50")) return(base)
+  base@scales <- base@scales$clone()
+  sc <- base@scales$get_scales("fill")
+  sc$na.value <- na_fill
+  base
 }

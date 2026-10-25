@@ -42,12 +42,18 @@ calor_size <- function(plot) {
   # they are not in the gtable heights; make room for the longest one.
   if (is_calor(plot)) {
     st <- calor_state(plot)
-    names <- unlist(lapply(c(st$anno$left, st$anno$right), function(tr) tr$name))
+    side_tracks <- c(st$anno$left, st$anno$right)
+    names <- unlist(lapply(side_tracks, function(tr) tr$name))
+    hang <- 0
     if (length(names) && any(nzchar(names))) {
       hang <- max(nchar(names)) * 7 * 0.55 / 72.27 * 25.4 + 2
-      below <- sum(vapply(st$anno$bottom, function(tr) tr$size %||% 4, numeric(1)))
-      sz[2] <- sz[2] + max(0, hang - below)
+      # Bars and boxplots put a value axis between the cells and the name.
+      if (any(vapply(side_tracks, function(tr) tr$type %in% c("bar", "boxplot"), logical(1)))) hang <- hang + 6
     }
+    # A calor_panel() brings its own value axis and title.
+    for (tr in side_tracks) if (identical(tr$type, "panel")) hang <- max(hang, panel_hang_mm(tr))
+    below <- sum(vapply(st$anno$bottom, function(tr) tr$size %||% 4, numeric(1)))
+    sz[2] <- sz[2] + max(0, hang - below)
   }
   sz
 }

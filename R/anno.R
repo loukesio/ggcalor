@@ -46,6 +46,12 @@ ggplot_add.calor_anno <- function(object, plot, ...) {
       tr$colours <- object$colours[[tr$name]]
       tr$show_legend <- object$show_legend
       if (tr$type == "auto") tr$type <- if (is.numeric(tr$values)) "bar" else "tile"
+      # Unordered categorical tracks continue along the qualitative palette, so
+      # two tracks never share colours by accident.
+      if (qualitative_track(tr)) {
+        tr$pal_offset <- sum(vapply(unlist(st$anno, recursive = FALSE), function(o)
+          if (qualitative_track(o)) length(unique(stats::na.omit(o$values))) else 0L, numeric(1)))
+      }
       st$anno[[side]] <- c(st$anno[[side]], list(tr))
     }
   }
@@ -151,6 +157,7 @@ ggplot_add.calor_text <- function(object, plot, ...) {
 
 # Build one annotation track as a ggplot aligned to the layout of `axis`.
 track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
+  if (identical(tr$type, "panel")) return(panel_plot(tr, lay, cell_mm))
   along_cols <- tr$side %in% c("top", "bottom")
   n <- length(lay$order)
   pos <- lay$pos
@@ -198,7 +205,14 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
                else scale_x_continuous(limits = c(0.5, 1.5), expand = c(0, 0))
       p <- p + if (is.numeric(df$value)) {
         if (!is.null(tr$colours)) scale_fill_gradientn(colours = tr$colours) else scale_fill_viridis_c(option = "mako", direction = -1)
-      } else if (!is.null(tr$colours)) scale_fill_manual(values = tr$colours) else scale_fill_calor_d()
+      } else if (!is.null(tr$colours)) {
+        scale_fill_manual(values = tr$colours)
+      } else if (is.ordered(df$value)) {
+        # Ordered levels read as a light-to-dark sequence.
+        scale_fill_manual(values = grDevices::colorRampPalette(c("#DEEBF7", "#08519C"))(nlevels(df$value)))
+      } else {
+        calor_qualitative_scale(tr$pal_offset %||% 0)
+      }
     } else if (tr$type == "glyph") {
       col <- tr$colours %||% "grey20"
       p <- ggplot(df, if (along_cols) aes(x = .data$pos, y = 1) else aes(x = 1, y = .data$pos))
@@ -257,19 +271,21 @@ value_axis <- function(along_cols, side, integer = FALSE) {
     }
     b
   }
+  # 800K rather than 8e+05.
+  lab <- scales::label_number(scale_cut = scales::cut_short_scale())
   txt <- element_text(size = 5.5)
   line <- element_line(linewidth = 0.3, colour = "grey55")
   tick <- theme(axis.ticks.length = grid::unit(0.7, "mm"))
   if (along_cols) {
-    list(scale_y_continuous(expand = expansion(mult = c(0.02, 0.08)), breaks = brk(3)),
+    list(scale_y_continuous(expand = expansion(mult = c(0.02, 0.08)), breaks = brk(3), labels = lab),
          theme(axis.text.y = txt, axis.text.y.left = element_text(hjust = 1, margin = margin(r = 1)),
                axis.ticks.y = line, axis.line.y = line), tick)
   } else if (side == "left") {
-    list(scale_x_reverse(expand = expansion(mult = c(0.08, 0.02)), breaks = brk(3)),
+    list(scale_x_reverse(expand = expansion(mult = c(0.08, 0.02)), breaks = brk(3), labels = lab),
          theme(axis.text.x = txt, axis.text.x.bottom = element_text(margin = margin(t = 1)),
                axis.ticks.x = line, axis.line.x = line), tick)
   } else {
-    list(scale_x_continuous(expand = expansion(mult = c(0.02, 0.08)), breaks = brk(3)),
+    list(scale_x_continuous(expand = expansion(mult = c(0.02, 0.08)), breaks = brk(3), labels = lab),
          theme(axis.text.x = txt, axis.text.x.bottom = element_text(margin = margin(t = 1)),
                axis.ticks.x = line, axis.line.x = line), tick)
   }
@@ -283,8 +299,13 @@ place_labels <- function(p, lay, side, main_theme) {
   p@scales <- p@scales$clone()
   sc <- p@scales$get_scales(if (along_cols) "x" else "y")
   if (is.null(sc)) return(p)
-  sc$breaks <- pos
-  sc$labels <- lay$order
+  if (sc$is_discrete()) {
+    # A calor_panel(): its limits are already the names.
+    sc$breaks <- lay$order
+  } else {
+    sc$breaks <- pos
+    sc$labels <- lay$order
+  }
   sc$position <- side
   el <- paste0("axis.text.", if (along_cols) "x." else "y.", side)
   args <- stats::setNames(list(calc_element(el, main_theme)), el)
@@ -396,8 +417,17 @@ bracket_plot <- function(df, tr, along_cols) {
 #' extension), used for categorical annotation tracks.
 #' @param ... Passed to [ggplot2::discrete_scale()].
 #' @export
-scale_fill_calor_d <- function(...) {
-  pal <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
-           "#CC79A7", "#999999", "#8C564B", "#17BECF", "#BCBD22", "#7F7F7F")
+scale_fill_calor_d <- function(...) calor_qualitative_scale(0, ...)
+
+calor_pal <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
+               "#CC79A7", "#999999", "#8C564B", "#17BECF", "#BCBD22", "#7F7F7F")
+
+# The qualitative palette starting `offset` colours in, wrapping around.
+calor_qualitative_scale <- function(offset = 0, ...) {
+  pal <- calor_pal[(seq_along(calor_pal) + offset - 1) %% length(calor_pal) + 1]
   discrete_scale("fill", palette = function(n) rep_len(pal, n), ...)
+}
+
+qualitative_track <- function(tr) {
+  identical(tr$type, "tile") && is.null(tr$colours) && !is.numeric(tr$values) && !is.ordered(tr$values)
 }

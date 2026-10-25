@@ -20,6 +20,9 @@ calor_legend <- function(type = c("histogram", "colourbar"), width = 32, height 
 ggplot_add.calor_legend <- function(object, plot, ...) {
   check_calor(plot, "calor_legend()")
   st <- calor_state(plot)
+  if (identical(object$type, "histogram") && isTRUE(st$categorical)) {
+    cli::cli_abort("{.code calor_legend(\"histogram\")} needs numeric values; this heatmap is categorical.")
+  }
   st$legend <- unclass(object)
   calor_state(plot) <- st
   plot

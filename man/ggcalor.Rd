@@ -56,7 +56,8 @@ offset lattice, so trees and tracks are not drawn with them.}
 
 \item{mask}{Optional logical matrix; \code{TRUE} cells are hidden (drawn as NA).}
 
-\item{na_fill}{Fill colour for missing or masked cells.}
+\item{na_fill}{Fill colour for missing or masked cells. Also applied to a
+fill scale you add, unless that scale sets its own \code{na.value}.}
 
 \item{border}{Colour of the cell border, or \code{NA} for none.}
 
@@ -76,7 +77,8 @@ same surface as a continuous image. Dendrograms and tracks still align.}
 
 \item{smooth_sigma}{Blur radius in cells.}
 
-\item{smooth_bins}{Number of contour bands.}
+\item{smooth_bins}{Approximate number of contour bands; breaks are rounded
+to pretty values.}
 
 \item{labels}{Which labels to show: \code{"both"}, \code{"rows"}, \code{"cols"} or \code{"none"}.}
 

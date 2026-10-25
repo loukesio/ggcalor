@@ -21,7 +21,8 @@
 #'   `"none"`.
 #' @param scale_method `"zscore"` or `"minmax"`. See [calor_scale()].
 #' @param mask Optional logical matrix; `TRUE` cells are hidden (drawn as NA).
-#' @param na_fill Fill colour for missing or masked cells.
+#' @param na_fill Fill colour for missing or masked cells. Also applied to a
+#'   fill scale you add, unless that scale sets its own `na.value`.
 #' @param border Colour of the cell border, or `NA` for none.
 #' @param palette `"auto"` picks a diverging palette when values span zero
 #'   and a sequential one otherwise. Any `scale_fill_*()` can be added later
@@ -34,7 +35,8 @@
 #'   matrix into a surface drawn as filled contour bands; `"raster"` draws the
 #'   same surface as a continuous image. Dendrograms and tracks still align.
 #' @param smooth_sigma Blur radius in cells.
-#' @param smooth_bins Number of contour bands.
+#' @param smooth_bins Approximate number of contour bands; breaks are rounded
+#'   to pretty values.
 #' @param labels Which labels to show: `"both"`, `"rows"`, `"cols"` or `"none"`.
 #' @param label_position Where column labels go: `"auto"` (top, or bottom when
 #'   a column dendrogram is present), `"top"` or `"bottom"`.
@@ -124,7 +126,7 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
   p <- ggplot(long, mapping) +
     cells +
     scales +
-    coord_cartesian(clip = "off") +
+    coord_cartesian(clip = "off", default = TRUE) +
     labs(x = NULL, y = NULL, fill = "value") +
     theme_calor() +
     sizes
@@ -132,16 +134,18 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
   if (labels %in% c("rows", "none")) {
     p <- p + theme(axis.text.x.top = element_blank(), axis.text.x.bottom = element_blank())
   }
-  if (labels %in% c("cols", "none")) p <- p + theme(axis.text.y = element_blank())
+  if (labels %in% c("cols", "none")) p <- p + theme(axis.text.y.left = element_blank(), axis.text.y.right = element_blank())
 
-  if (categorical) {
+  # The default fill scale is kept in the state and added at build time, so a
+  # user's scale_fill_*() replaces it without ggplot2's "already present" note.
+  fill_scale <- if (categorical) {
     # Keep NA out of the legend but still paint the cells.
-    p <- p + scale_fill_calor_d(na.value = na_fill, na.translate = TRUE, limits = function(l) l[!is.na(l)])
+    scale_fill_calor_d(na.value = na_fill, na.translate = TRUE, limits = function(l) l[!is.na(l)])
   } else if (smooth == "contour") {
-    p <- p + scale_fill_viridis_d(option = "turbo") + labs(fill = "value")
+    scale_fill_viridis_d(option = "turbo")
   } else if (identical(palette, "auto")) {
     rng <- range(m, na.rm = TRUE)
-    p <- p + if (rng[1] < 0 && rng[2] > 0) {
+    if (rng[1] < 0 && rng[2] > 0) {
       scale_fill_gradient2(low = "#2166AC", mid = "#F7F7F7", high = "#B2182B",
                            na.value = na_fill, guide = calor_colourbar())
     } else {
@@ -152,6 +156,8 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
 
   class_calor(p, calor = list(
     matrix = m,
+    fill_scale = fill_scale,
+    na_fill = na_fill,
     raw = raw,
     num = num,
     categorical = categorical,

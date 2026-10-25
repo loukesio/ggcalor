@@ -30,123 +30,201 @@ knitr::opts_hooks$set(calor.autosize = function(options) {
 })
 ```
 
-ggcalor is a grammar of cells. Every chart below is the same grid with
-different cells, ordering, and tracks. The recipes are short on purpose: copy
-one and swap in your data.
+Each recipe below is one complete example on real data, with a short note on
+what the verbs do and why the plot is built that way. Copy the code, swap in
+your own matrix, and adjust.
 
 ```{r setup}
 library(ggcalor)
-set.seed(42)
 ```
 
-## Expression matrix with trees, splits, annotations
+## Clustered heatmap with annotations
 
-```{r expression}
-m <- matrix(rnorm(30 * 12), 30, 12,
-            dimnames = list(paste0("gene_", 1:30), paste0("sample", 1:12)))
-m[1:10, 1:6] <- m[1:10, 1:6] + 2.5
-m[11:20, 7:12] <- m[11:20, 7:12] - 2
-samples <- data.frame(condition = rep(c("control", "treated"), each = 6),
-                      batch = rep(c("b1", "b2", "b3"), 4), row.names = colnames(m))
-genes <- data.frame(type = sample(c("TF", "kinase", "other"), 30, TRUE),
-                    row.names = rownames(m))
+The `dune` data from vegan records the cover (on a 1–9 scale) of 30 plant
+species in 20 Dutch meadows, along with how each meadow is managed and how wet
+it is. A clustered heatmap shows which species occur together and which sites
+are alike.
 
-ggcalor(m, cell_size = 4.5, scale = "row") +
+```{r dune}
+data(dune, dune.env, package = "vegan")
+sites <- data.frame(management = dune.env$Management, moisture = dune.env$Moisture,
+                    row.names = rownames(dune))
+levels(sites$management) <- c("biological", "hobby", "nature reserve", "standard")
+
+ggcalor(t(dune), cell_size = 4.2) +
   calor_dendro(rows = TRUE, cols = TRUE, k = 3, highlight = TRUE) +
-  calor_split(rows = 3, gap = 2) +
-  calor_anno(top = samples, left = genes,
-             colours = list(condition = c(control = "grey70", treated = "firebrick"))) +
-  calor_margin(right = "mean", bottom = "boxplot") +
-  calor_legend("histogram")
+  calor_split(cols = 3) +
+  calor_anno(top = sites) +
+  calor_margin(right = "mean") +
+  scale_fill_distiller(palette = "Greens", direction = 1) +
+  labs(fill = "cover")
 ```
 
-Tracks always touch the cells; row and column names move to the outside.
-`calor_margin()` summarises each row or column in place: here a bar of the
-row means on the right and a boxplot of every column at the bottom.
-`calor_legend("histogram")` replaces the colour bar with a histogram of the
-values painted in the fill scale, so the legend also shows how the data
-fills that scale.
+`calor_dendro()` clusters both axes and draws the trees. With `k = 3` it cuts
+each tree into three groups, and `highlight = TRUE` shades them.
+`calor_split(cols = 3)` then separates the three column groups with a gap;
+cells stay square and each slice keeps its own subtree.
 
-The final order is available for reuse:
+`calor_anno()` takes a data frame whose row names match the columns. Each
+column becomes one track. Unordered factors get distinct qualitative colours,
+and ordered factors such as `moisture` get a light-to-dark sequence.
+`calor_margin(right = "mean")` adds a bar of each species' mean cover.
+
+The final order is available for reuse, for example to order a table the same
+way:
 
 ```{r order}
-p <- ggcalor(m) + calor_dendro(rows = TRUE, cols = TRUE)
+p <- ggcalor(t(dune)) + calor_dendro(rows = TRUE, cols = TRUE)
 str(calor_order_of(p))
 ```
 
+## Your own plots beside the heatmap
+
+`calor_panel()` attaches any ggplot to a side of the heatmap. Map the row
+names to `y` (for a left or right panel) or the column names to `x` (for a
+top or bottom panel) and write the rest as ordinary ggplot2 code: geoms,
+scales, themes and labels are kept as you wrote them. ggcalor only lines the
+names up with the cells, after clustering, ordering and splitting.
+
+```{r panel}
+m <- t(dune)
+species <- data.frame(species = rownames(m), mean = rowMeans(m),
+                      se = apply(m, 1, sd) / sqrt(ncol(m)))
+bars <- ggplot(species, aes(mean, species)) +
+  geom_col(fill = "#74A9CF", width = 0.7) +
+  geom_errorbar(aes(xmin = mean - se, xmax = mean + se), width = 0.3, linewidth = 0.3) +
+  labs(x = "mean cover \u00b1 se") +
+  theme_minimal(base_size = 8)
+
+present <- data.frame(site = rep(colnames(m), each = nrow(m)), cover = as.vector(m))
+present <- present[present$cover > 0, ]
+boxes <- ggplot(present, aes(site, cover)) +
+  geom_boxplot(width = 0.6, fill = "grey90", outlier.size = 0.4, linewidth = 0.3) +
+  theme_classic(base_size = 8)
+
+ggcalor(m, cell_size = 4.2) +
+  calor_dendro(rows = TRUE, cols = TRUE) +
+  calor_split(cols = 3) +
+  calor_panel(bars, side = "right", size = 28) +
+  calor_panel(boxes, side = "top", size = 18) +
+  scale_fill_distiller(palette = "Greens", direction = 1) +
+  labs(fill = "cover")
+```
+
+The boxplots follow the clustered site order, gaps included, and the bars
+follow the species. Because the panels match by name, the order of rows in
+your data frame does not matter. A legend in a panel (say, bars filled by
+group) joins the heatmap's legends.
+
+## Scaled columns, glyphs and brackets
+
+When columns are measured in different units, scale them first.
+`scale = "column"` z-scores every column, so each cell shows how far a car sits
+from the average for that variable.
+
+```{r cars}
+vars <- c("cyl", "disp", "hp", "carb", "wt", "drat", "gear", "mpg", "qsec")
+group <- rep(c("engine", "chassis", "performance"), c(4, 3, 2))
+transmission <- ifelse(mtcars$am == 1, "manual", "automatic")
+
+ggcalor(as.matrix(mtcars[, vars]), cell_size = 4, scale = "column") +
+  calor_dendro(rows = TRUE, k = 2, highlight = TRUE) +
+  calor_split(rows = 2) +
+  calor_anno(left = list(transmission = transmission), type = "glyph") +
+  calor_bracket(cols = group, side = "bottom", angle = 90, size = 14) +
+  calor_legend("histogram") +
+  labs(fill = "z-score")
+```
+
+`type = "glyph"` draws a categorical track as symbols rather than coloured
+tiles. This keeps the colour for the heatmap itself. `calor_bracket()` labels
+runs of adjacent columns. `calor_legend("histogram")` replaces the colour bar
+with a histogram of all values painted in the fill scale, so the legend also
+shows how the values are distributed.
+
 ## Oncoprint
 
-A categorical matrix gets a discrete fill; empty cells take `na_fill`.
-Clustering, ordering and margins then work on presence. The memo sort orders samples so those altered in the
-most frequent gene come first.
+A character matrix gets a discrete fill. `luad_alterations` has one row per
+gene and one column per TCGA lung adenocarcinoma, with `NA` where a gene is
+not altered. To keep the cells square at a readable width, we keep the ten
+most often altered genes and the tumours altered in at least one of them.
 
 ```{r oncoprint}
-genes <- c("TP53", "KRAS", "EGFR", "PIK3CA", "BRAF", "PTEN", "ALK", "MET")
-samples <- sprintf("S%02d", 1:40)
-mut <- matrix(NA_character_, 8, 40, dimnames = list(genes, samples))
-types <- c("missense", "nonsense", "amplification", "deletion")
-freq <- c(.6, .45, .3, .3, .2, .2, .1, .1)
-for (g in seq_along(genes)) {
-  idx <- sample(40, rbinom(1, 40, freq[g]))
-  mut[g, idx] <- sample(types, length(idx), TRUE, prob = c(.5, .2, .15, .15))
-}
-stage <- data.frame(stage = sample(c("I", "II", "III"), 40, TRUE), row.names = samples)
+alt_colours <- c(mutation = "#2E7D32", amplification = "#C62828",
+                 `deep deletion` = "#1565C0", `mutation + amplification` = "#8E24AA")
 
-ggcalor(mut, cell_size = c(3, 6), cell_gap = 0.15, border = NA, na_fill = "grey93",
-        labels = "rows") +
+n_altered <- rowSums(!is.na(luad_alterations))
+m <- luad_alterations[order(n_altered, decreasing = TRUE)[1:10], ]
+m <- m[, colSums(!is.na(m)) > 0]
+
+ggcalor(m, cell_size = 2.6, cell_gap = 0.25, border = NA, labels = "rows") +
   calor_order(rows = "sum", cols = "memo") +
-  calor_margin(right = "sum", top = "sum", size = 8) +
-  calor_anno(bottom = stage, size = 3) +
-  labs(fill = "alteration")
+  calor_margin(right = "sum", top = "sum", size = 10) +
+  scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "grey93") +
+  labs(fill = NULL) +
+  theme(legend.position = "bottom")
 ```
+
+`calor_order(rows = "sum")` puts the most frequently altered genes on top.
+`cols = "memo"` is the memo sort used by cBioPortal. It orders samples so
+that those altered in the top gene come first, then the next gene, and so on,
+which turns mutual exclusivity into a staircase. Giving `breaks` in
+`scale_fill_manual()` keeps the empty cells (`NA`) painted with `na.value`
+but out of the legend. `labels = "rows"` shows the gene names and hides the
+sample IDs, which say nothing here.
 
 ## Correlation matrix
 
-Order first, then mask the upper triangle. Masked cells are hidden with a
-transparent `na_fill`, and the values sit in the cells.
+Order first, then mask. Here the variables are ordered by clustering on
+`1 - r`, and `mask = upper.tri(cm)` hides the redundant upper triangle. A
+transparent `na_fill` makes the masked cells disappear.
 
 ```{r correlation}
-x <- matrix(rnorm(300), 50, 6, dimnames = list(NULL, paste0("v", 1:6)))
-x[, 2] <- x[, 1] + rnorm(50, sd = 0.5); x[, 4] <- -x[, 3] + rnorm(50, sd = 0.7)
-cm <- cor(x)
-o <- hclust(dist(cm))$order
+cm <- cor(mtcars)
+o <- hclust(as.dist(1 - cm))$order
 cm <- cm[o, o]
 
-ggcalor(cm, cell_size = 9, mask = upper.tri(cm), cell_gap = 0.08, border = NA, na_fill = NA) +
-  calor_text(digits = 2, size = 6) +
+ggcalor(cm, cell_size = 8, mask = upper.tri(cm), cell_gap = 0.08, border = NA, na_fill = NA) +
+  calor_text(digits = 2, size = 5.5) +
+  scale_fill_distiller(palette = "RdBu", limits = c(-1, 1)) +
   labs(fill = "r")
 ```
 
+Setting `limits = c(-1, 1)` centres the diverging palette on zero and keeps
+the colour bar on the full range of a correlation.
+
 ## Calendar heatmaps
 
-Long data goes straight in. A binned fill scale and gaps give the editorial
-look; `coord_radial()` turns the same grid into a ring.
+A month-by-year grid is a heatmap too. `AirPassengers` gives monthly airline
+passengers (in thousands) from 1949 to 1960.
 
 ```{r calendar}
-crashes <- expand.grid(month = month.abb, hour = sprintf("%02d", 0:23))
-crashes$pct <- with(crashes, 10 + 25 * (as.integer(hour) < 5) +
-                      8 * (as.integer(hour) > 19) + runif(nrow(crashes), 0, 10))
+air <- matrix(AirPassengers, 12, dimnames = list(month.abb, 1949:1960))
 
-ggcalor(crashes, rows = "month", cols = "hour", value = "pct",
-        cell_size = 5, cell_gap = 0.12, border = NA) +
-  scale_fill_fermenter(palette = "BuPu", direction = 1, n.breaks = 6) +
-  theme(legend.position = "bottom", legend.key.width = grid::unit(10, "mm"),
-        legend.key.height = grid::unit(3, "mm"),
-        axis.text.x.top = element_text(angle = 0))
+ggcalor(air, cell_size = 7, cell_gap = 0.1, border = NA) +
+  calor_text(digits = 0, size = 5) +
+  scale_fill_distiller(palette = "Blues", direction = 1) +
+  labs(fill = "passengers\n(thousands)")
 ```
 
-```{r radial}
-ggcalor(crashes, rows = "month", cols = "hour", value = "pct",
-        cell_size = 4, cell_gap = 0.12) +
-  calor_radial(inner.radius = 0.3, legend = "outside") +
-  scale_fill_fermenter(palette = "BuPu", direction = 1, n.breaks = 6)
+Both the growth over the years (left to right) and the summer peak each year
+(July and August) show up at once. `calor_radial()` bends the same grid into a
+ring, with years running outwards from 1949 in the middle:
+
+```{r calendar-ring}
+ggcalor(t(air)[12:1, ], cell_size = 4, cell_gap = 0.1, border = NA) +
+  calor_radial(inner.radius = 0.3, gap = 0.35, legend = "outside", label_size = 8) +
+  scale_fill_distiller(palette = "Blues", direction = 1) +
+  labs(fill = "passengers\n(thousands)")
 ```
 
-## Radial ring of categories
+## Ring of categories
 
-Long data goes straight in, one row per country and month. `calor_radial()`
-does the rest: labels radiate outward, the months sit in the gap, the legend
-is in the hole. The country names are real; the membership is simulated.
+Long data goes straight in through `rows`, `cols` and `value`, one row per
+cell. `dvs_members` lists the months in which each of 130 countries gained
+members of a society, with their dominant trait. `calor_radial()` places the
+country names around the ring, the months in the gap, and the legend in the
+hole. The country names are real; the memberships are simulated.
 
 ```{r ring}
 ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
@@ -159,65 +237,76 @@ ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
 
 ## Smooth surfaces
 
-`smooth = "contour"` interpolates the matrix onto a fine grid, blurs it, and
-draws filled contour bands. `smooth = "raster"` draws the same surface as a
-continuous image, and trees and tracks still align to the underlying rows and
-columns.
+When rows and columns are positions on a regular grid, like the heights of
+the Maunga Whau volcano in `volcano`, a smooth surface reads better than cells.
+`smooth = "contour"` interpolates the matrix onto a finer grid, blurs it by
+`smooth_sigma` cells, and draws filled contour bands at rounded break values.
 
 ```{r surface}
-f <- outer(1:30, 1:45, function(i, j) sin(i / 4) * cos(j / 6) + 0.6 * sin((i + j) / 5))
-f <- f + matrix(rnorm(length(f), sd = 0.25), nrow(f))
-dimnames(f) <- list(paste0("r", 1:30), paste0("c", 1:45))
+v <- t(volcano[seq(87, 1, -2), seq(1, 61, 2)])
+dimnames(v) <- list(seq_len(nrow(v)), seq_len(ncol(v)))
 
-ggcalor(f, cell_size = 3, smooth = "contour", smooth_sigma = 1.5, smooth_bins = 8,
-        labels = "none") +
-  scale_fill_manual(values = c("#1b4d8f", "#2a9df4", "#3cb44b", "#bfef45",
-                               "#ffe119", "#f58231", "#e6194b", "#c71585"))
+ggcalor(v, cell_size = 2.4, smooth = "contour", smooth_sigma = 1, labels = "none") +
+  scale_fill_viridis_d(option = "mako") +
+  labs(fill = "height (m)")
 ```
 
+`smooth = "raster"` draws the same surface as a continuous image:
+
 ```{r surface-raster}
-ggcalor(f[1:20, 1:20], cell_size = 4, smooth = "raster") +
-  calor_dendro(rows = TRUE, cols = TRUE)
+ggcalor(v, cell_size = 2.4, smooth = "raster", labels = "none") +
+  scale_fill_viridis_c(option = "mako") +
+  labs(fill = "height (m)")
 ```
 
 ## Hex cells
 
-```{r hex}
-hx <- t(apply(matrix(rnorm(12 * 20), 12, 20), 1, cumsum))
-dimnames(hx) <- list(paste0("r", 1:12), paste0("c", 1:20))
+`cell_shape = "hex"` tiles the grid with hexagons, offsetting every other row.
 
-ggcalor(hx, cell_shape = "hex", cell_size = 5, cell_gap = 0.06) +
-  scale_fill_distiller(palette = "Spectral")
+```{r hex}
+hx <- volcano[seq(1, 87, 5), seq(1, 61, 4)]
+dimnames(hx) <- list(seq_len(nrow(hx)), seq_len(ncol(hx)))
+
+ggcalor(hx, cell_shape = "hex", cell_size = 5, cell_gap = 0.06, labels = "none") +
+  scale_fill_distiller(palette = "Spectral") +
+  labs(fill = "height (m)")
 ```
 
-## Waffle
+## Waffle charts
+
+`ggwaffle()` draws counts as a grid of unit cells, one waffle per group. Here
+each square is 1% of the penguins sampled on each island.
 
 ```{r waffle}
-pop <- data.frame(decile = rep(c("<100", "3K", "12K", "43K"), each = 4),
-                  region = rep(c("Africa", "China", "India", "Europe"), 4),
-                  share = c(60, 10, 25, 5, 30, 30, 30, 10, 10, 40, 20, 30, 5, 10, 5, 80))
-ggwaffle(pop, "region", "share", by = "decile", n = 100, rows = 20, cell_size = 2.5)
+penguins <- as.data.frame(table(island = palmerpenguins::penguins$island,
+                                species = palmerpenguins::penguins$species))
+ggwaffle(penguins, "species", "Freq", by = "island", cell_size = 2.6)
 ```
 
 ## Interactive
 
-With ggiraph installed, cells and categorical tracks get tooltips, and
-hovering a row annotation highlights the whole row.
+With ggiraph installed, `calor_interactive()` adds tooltips to the cells and
+categorical tracks, and hovering a cell highlights its whole row (or column,
+with `data_id = "col"`). `calor_girafe()` renders the result as an HTML
+widget.
 
 ```{r interactive, eval = FALSE}
-ggcalor(m, scale = "row") +
+p <- ggcalor(t(dune), cell_size = 4.2) +
   calor_dendro(rows = TRUE, cols = TRUE) +
-  calor_anno(top = samples, left = genes) +
-  calor_interactive(data_id = "row") |>
-  calor_girafe()
+  calor_anno(top = sites) +
+  calor_interactive(data_id = "row")
+calor_girafe(p)
 ```
 
 ## Saving
 
-`calor_save()` computes the device size from the cells, trees and legends, so
-the file holds exactly what you built.
+A ggcalor plot knows its own size: the cells, trees, tracks, labels and legend
+add up to a fixed width and height in millimetres. `calor_size()` reports it,
+and `calor_save()` passes it to `ggsave()`, so the file holds exactly the plot
+you built with no squashed cells or empty borders.
 
 ```{r save, eval = FALSE}
-calor_save(p, "heatmap.pdf")
-calor_save(p, "heatmap.png", dpi = 300)
+calor_size(p)
+calor_save(p, "dune.pdf")
+calor_save(p, "dune.png", dpi = 300)
 ```

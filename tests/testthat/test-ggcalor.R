@@ -61,3 +61,63 @@ test_that("calor_size and calor_save give a natural size", {
   calor_save(p, f, dpi = 50)
   expect_true(file.exists(f))
 })
+
+test_that("user scales and calor_radial() replace the defaults silently", {
+  expect_no_message(p <- ggcalor(m) + scale_fill_viridis_c())
+  expect_no_message(ggcalor(m) + calor_radial())
+  fill_call <- function(p) ggplot_build(p)@plot@scales$get_scales("fill")$call[[1]]
+  expect_identical(fill_call(p), quote(scale_fill_viridis_c))
+  # Without a user scale the default diverging scale is used.
+  expect_identical(fill_call(ggcalor(m)), quote(scale_fill_gradient2))
+})
+
+test_that("a histogram legend on categorical cells fails clearly", {
+  mut <- matrix(c("a", "b", NA, "a"), 2, 2)
+  expect_error(ggcalor(mut) + calor_legend("histogram"), "categorical")
+})
+
+test_that("categorical tracks get distinct colours and ordered tracks a sequence", {
+  cols <- data.frame(a = rep(c("x", "y"), length.out = 5), b = rep(c("u", "v"), length.out = 5),
+                     o = factor(c(1, 2, 3, 1, 2), ordered = TRUE), row.names = colnames(m))
+  tr <- calor_state(ggcalor(m) + calor_anno(top = cols))$anno$top
+  expect_equal(tr[[1]]$pal_offset, 0)
+  expect_equal(tr[[2]]$pal_offset, 2)
+  expect_null(tr[[3]]$pal_offset)
+  expect_s3_class(ggplotGrob(ggcalor(m) + calor_anno(top = cols)), "gtable")
+})
+
+test_that("na_fill applies to a user fill scale unless it sets na.value", {
+  na_of <- function(p) ggplot_build(p)@plot@scales$get_scales("fill")$na.value
+  expect_identical(na_of(ggcalor(m, na_fill = NA) + scale_fill_distiller()), NA)
+  expect_identical(na_of(ggcalor(m, na_fill = NA) + scale_fill_distiller(na.value = "pink")), "pink")
+})
+
+test_that("calor_panel() puts each name at its row or column, gaps included", {
+  rows <- data.frame(id = rownames(m), v = seq_len(nrow(m)))
+  cols <- data.frame(id = colnames(m), v = seq_len(ncol(m)))
+  p <- ggcalor(m) + calor_dendro(rows = TRUE) + calor_split(rows = 2, cols = c(1, 1, 2, 2, 2), gap = 3) +
+    calor_panel(ggplot(rows, aes(v, id, label = id)) + geom_text(), side = "right") +
+    calor_panel(ggplot(cols, aes(id, v, label = id)) + geom_text(), side = "bottom")
+  st <- resolve_layout(calor_state(p))
+  at <- function(side, lay) {
+    tr <- calor_state(p)$anno[[side]][[1]]
+    ggplot_build(panel_plot(tr, lay, lay$cell_mm))@data[[1]]
+  }
+  lr <- st$lay$rows; lc <- st$lay$cols
+  y <- at("right", lr)
+  expect_equal(y$y[match(lr$order, y$label)], lr$L + 1 - lr$pos, ignore_attr = TRUE)
+  x <- at("bottom", lc)
+  expect_equal(x$x[match(lc$order, x$label)], lc$pos, ignore_attr = TRUE)
+  expect_gt(lr$g, 0)
+  expect_s3_class(ggplotGrob(p), "gtable")
+})
+
+test_that("calor_panel() replaces the user's along-axis scale and keeps the rest", {
+  rows <- data.frame(id = rownames(m), v = seq_len(nrow(m)), g = rep(c("a", "b"), length.out = nrow(m)))
+  side <- ggplot(rows, aes(v, id, fill = g)) + geom_col() + scale_y_discrete(limits = rev) +
+    scale_fill_manual(values = c(a = "red", b = "blue"))
+  p <- ggcalor(m) + calor_panel(side, side = "left", size = 20)
+  expect_no_message(g <- ggplotGrob(p))
+  expect_s3_class(g, "gtable")
+  expect_error(calor_panel(1), "ggplot")
+})

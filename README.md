@@ -1,171 +1,162 @@
 # ggcalor
 
-*calor*: Spanish for heat.
+**Heatmaps as a grammar of cells, built on ggplot2.**
 
-A ggplot2-native grammar for heatmaps and other cell grids. Cells are square
-by default and sized in millimetres, so the plot sizes itself instead of the
-device. Scale, order, cluster and decorate with `calor_*()` verbs, and the
-result stays an ordinary `ggplot` object that accepts themes, scales and labels.
+ggcalor draws heatmaps and other cell grids (oncoprints, correlation
+matrices, calendars, rings, waffles) as ordinary ggplot objects. You add
+clustering, splits, annotation tracks and margins with `+`, the same way you
+add a theme or a scale. *Calor* is Spanish for heat.
 
-Requires ggplot2 >= 4.0.0.
+<p align="center"><img src="man/figures/readme-measles.png" alt="Measles cases in US states from 1930 to 2001, split at the 1963 vaccine"></p>
 
 ```r
-# install.packages("pak"); pak::pak("loukesio/ggcalor")
 library(ggcalor)
 
-set.seed(42)
-m <- matrix(rnorm(30 * 12), 30, 12,
-            dimnames = list(paste0("gene_", 1:30), paste0("sample", 1:12)))
-m[1:10, 1:6] <- m[1:10, 1:6] + 2.5
-m[11:20, 7:12] <- m[11:20, 7:12] - 2
-m[21:30, 4:9] <- m[21:30, 4:9] + 1.5
-samples <- data.frame(condition = rep(c("control", "treated"), each = 6),
-                      batch = rep(c("b1", "b2", "b3"), 4), row.names = colnames(m))
-genes <- data.frame(type = sample(c("TF", "kinase", "other"), 30, TRUE),
-                    row.names = rownames(m))
+era <- ifelse(as.integer(colnames(measles)) < 1963, "before vaccine", "after vaccine")
 
-ggcalor(m, cell_size = 4.5, scale = "row") +
+ggcalor(measles, cell_size = 2.6, cell_gap = 0.06, border = NA) +
+  calor_split(cols = factor(era, c("before vaccine", "after vaccine")), gap = 2) +
+  calor_margin(top = "sum", size = 14) +
+  # Years with no reported cases are drawn in light grey.
+  scale_fill_fermenter(palette = "YlOrRd", direction = 1, transform = "log10",
+                       breaks = 10^(1:5), labels = scales::label_comma(),
+                       na.value = "grey95") +
+  labs(title = "Measles cases in the United States, 1930–2001",
+       subtitle = "The vaccine was licensed in 1963", fill = "cases")
+```
+
+## Installation
+
+ggcalor needs R 4.1 and ggplot2 4.0 or later.
+
+```r
+# install.packages("pak")
+pak::pak("loukesio/ggcalor")
+```
+
+## Why ggcalor
+
+**Cells have a real size.** You give the cell size in millimetres, and the
+plot is as large as its cells, trees, tracks and legend need. Cells stay
+square, labels never overlap, and a heatmap with 200 rows is drawn at the same
+scale as one with 20. `calor_save()` writes the file at that natural size, so
+you don't have to guess `width` and `height`.
+
+**Every feature is a verb you add.** `calor_dendro()` clusters and draws
+trees, `calor_split()` cuts the grid into slices, `calor_anno()` adds
+annotation tracks and `calor_margin()` adds row or column summaries. They
+compose in any order and keep everything aligned, including inside each
+slice.
+
+**The result is still a ggplot.** `scale_fill_*()`, `theme()`, `labs()` and
+`ggsave()` work as usual, and the plot combines with others in patchwork. There
+is no separate drawing system to learn.
+
+## A tour
+
+### Clustering, splits and annotations
+
+The `dune` data from vegan records the cover of 30 plant species in 20 Dutch
+meadows. Cut into three clusters, the meadows separate largely by moisture:
+the middle slice holds four of the seven wettest sites, three of them nature
+reserves. The top tracks show management and moisture, and the bars on
+the right give each species' mean cover.
+
+```r
+data(dune, dune.env, package = "vegan")
+sites <- data.frame(management = dune.env$Management, moisture = dune.env$Moisture,
+                    row.names = rownames(dune))
+levels(sites$management) <- c("biological", "hobby", "nature reserve", "standard")
+
+ggcalor(t(dune), cell_size = 4.2) +
   calor_dendro(rows = TRUE, cols = TRUE, k = 3, highlight = TRUE) +
-  calor_split(rows = 3, gap = 2) +
-  calor_anno(top = samples, left = genes,
-             colours = list(condition = c(control = "grey70", treated = "firebrick"))) +
-  calor_margin(right = "mean", bottom = "boxplot") +
-  labs(title = "Expression, z-scored by gene", subtitle = "rows cut into three clusters")
+  calor_split(cols = 3) +
+  calor_anno(top = sites) +
+  calor_margin(right = "mean") +
+  scale_fill_distiller(palette = "Greens", direction = 1) +
+  labs(title = "Plant cover in 20 Dutch dune meadows", fill = "cover")
 ```
 
-![Clustered, split and annotated expression heatmap](man/figures/readme-dendro.png)
+<p align="center"><img src="man/figures/readme-dune.png" alt="Plant cover in 20 dune meadows, clustered into three groups"></p>
 
-One cell grid, many looks. Cells carry their values as text, splits keep every
-cell square, and trees are clustered within each slice:
+### Oncoprints
 
-```r
-ggcalor(m[1:12, ], cell_size = 7, cell_gap = 0.1) +
-  calor_split(cols = samples$condition) +
-  calor_dendro(rows = TRUE, cols = TRUE) +
-  calor_text(digits = 1, size = 5)
-```
-
-![Values in cells with split columns](man/figures/readme-split.png)
-
-A histogram legend, glyph tracks and group brackets:
+A character matrix gets a discrete fill. Here each cell is one gene in one
+TCGA lung adenocarcinoma, and empty cells mean no alteration. The plot keeps
+the ten most often altered genes and the 106 tumours altered in at least one of
+them. The memo sort puts samples altered in the most frequently hit gene first,
+which makes mutually exclusive alterations easy to see: KRAS is altered in 55
+tumours and BRAF in 18, but only 5 tumours have both.
 
 ```r
-ggcalor(m3, cell_size = 5, scale = "row") +
-  calor_dendro(rows = TRUE, cols = TRUE, k = 2, highlight = TRUE) +
-  calor_split(rows = 2) +
-  calor_anno(bottom = list(scenario = scenario), type = "glyph") +
-  calor_bracket(cols = source_grp, side = "bottom", angle = 90, size = 10) +
-  calor_legend("histogram") +
-  calor_margin(right = "sd")
-```
+alt_colours <- c(mutation = "#2E7D32", amplification = "#C62828",
+                 `deep deletion` = "#1565C0", `mutation + amplification` = "#8E24AA")
 
-![Histogram legend, glyph track and brackets](man/figures/readme-legend.png)
+n_altered <- rowSums(!is.na(luad_alterations))
+m <- luad_alterations[order(n_altered, decreasing = TRUE)[1:10], ]
+m <- m[, colSums(!is.na(m)) > 0]
 
-Categorical matrices make an oncoprint, with the memo sort and alteration
-counts as margins:
-
-```r
-ggcalor(mut, cell_size = c(3, 6), cell_gap = 0.15, border = NA, na_fill = "grey93",
-        labels = "rows") +
+ggcalor(m, cell_size = 2.6, cell_gap = 0.25, border = NA, labels = "rows") +
   calor_order(rows = "sum", cols = "memo") +
-  calor_margin(right = "sum", top = "sum", size = 8) +
-  labs(fill = "alteration")
-```
-
-![Oncoprint with memo sort](man/figures/readme-oncoprint.png)
-
-The same cells make a waffle, or a ring with 130 countries around and the
-months along the radius:
-
-```r
-ggwaffle(pop, "region", "share", by = "decile", n = 100, rows = 20, cell_size = 2.5)
-
-ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
-        cell_size = 2.4, border = "grey85", na_fill = "white") +
-  calor_radial(inner.radius = 0.45)
-```
-
-![Waffle chart](man/figures/readme-waffle.png)
-![Radial ring of countries by month](man/figures/readme-radial.png)
-
-Or a smooth surface, interpolated and blurred from the same matrix:
-
-```r
-ggcalor(f, cell_size = 3, smooth = "contour", smooth_sigma = 1.5, smooth_bins = 8)
-```
-
-![Smooth contour surface](man/figures/readme-surface.png)
-
-Interactive, with tooltips and row highlighting, through 'ggiraph':
-
-```r
-ggcalor(m, scale = "row") +
-  calor_dendro(rows = TRUE, cols = TRUE) +
-  calor_anno(top = samples) +
-  calor_interactive(data_id = "row") |>
-  calor_girafe()
-```
-
-Everything after `ggcalor()` is plain ggplot2:
-
-```r
-ggcalor(m, scale = "row") +
-  calor_order(rows = "mean", cols = "cluster") +
-  scale_fill_viridis_c() +
+  calor_margin(right = "sum", top = "sum", size = 10) +
+  scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "grey93") +
+  labs(title = "RAS/RAF/MEK/JNK pathway alterations in lung adenocarcinoma", fill = NULL) +
   theme(legend.position = "bottom")
 ```
 
-Save at the plot's natural size, computed from the cells, tracks and legend:
+<p align="center"><img src="man/figures/readme-oncoprint.png" alt="Oncoprint of RAS/RAF/MEK/JNK pathway alterations"></p>
 
-```r
-calor_save(p, "heatmap.pdf")
-```
+### Beyond heatmaps
 
-## Styling
+The same grid also draws smooth surfaces, rings and waffle charts.
 
-Every ggcalor plot is a ggplot: `+ theme()`, `+ scale_fill_*()` and
-`+ labs()` all work. The verbs take their colours and sizes as arguments,
-and `calor_labels()` sets where the names go and how all text looks:
+<table>
+<tr>
+<td width="50%" align="center"><img src="man/figures/readme-volcano.png" alt="Contour surface of the Maunga Whau volcano"><br><code>smooth = &quot;contour&quot;</code></td>
+<td width="50%" align="center"><img src="man/figures/readme-ring.png" alt="Ring of 130 countries by month"><br><code>calor_radial()</code></td>
+</tr>
+<tr>
+<td colspan="2" align="center"><img src="man/figures/readme-waffle.png" alt="Waffle chart of penguin species on three islands" width="70%"><br><code>ggwaffle()</code></td>
+</tr>
+</table>
 
-```r
-ggcalor(m) +
-  calor_anno(top = meta, colours = list(group = c(A = "#1b9e77", B = "#d95f02"))) +
-  calor_margin(right = "mean", fill = "steelblue", size = 12) +
-  calor_labels(rows = "left", cols = "bottom", angle = 45, face = "italic", family = "Helvetica") +
-  scale_fill_distiller(palette = "RdYlBu") +
-  theme(legend.position = "bottom")
-```
-
-## Verbs
+## The verbs
 
 | Verb | What it does |
 |---|---|
-| `ggcalor(data, cell_size, cell_gap, scale, mask, ...)` | Matrix, wide or long data in; square cells out |
-| `calor_order(rows, cols)` | Sort by a statistic, a row/column, a vector, a function, or cluster leaf order |
-| `calor_dendro(rows, cols, k, highlight)` | Cluster, reorder and draw aligned trees; accepts `hclust` and `dendrogram` |
-| `calor_split(rows, cols, gap)` | Slices from a grouping vector or by cutting the tree; cells stay square |
-| `calor_anno(top, bottom, left, right)` | Categorical and numeric tracks from data frames, vectors or lists |
-| `calor_margin(top, bottom, left, right)` | Row and column summaries as bars or boxplots |
-| `calor_text(digits)` | Values written in the cells |
-| `calor_bracket(cols, rows)` | Brackets with labels over groups |
-| `calor_legend("histogram")` | Histogram of values in place of the colour bar |
-| `calor_labels(rows, cols, size, colour, face, angle)` | Where names go and how they look |
-| `calor_interactive()`, `calor_girafe(p)` | Tooltips and linked highlighting with 'ggiraph' |
-| `calor_radial(inner.radius)` | The grid as a ring, with readable labels and the legend in the hole |
-| `ggwaffle(counts)` | Unit chart on the same cell grid |
-| `ggcalor(smooth = "contour")` | Interpolated, blurred surface as contour bands or a raster |
-| `calor_order_of(p)` | The final row and column order, for reuse |
-| `calor_save(p, file)` | Save at natural size |
-| `theme_calor()` | Minimal theme for cell grids |
-| `geom_cell()` | The cell geom, usable on any ggplot |
+| `ggcalor()` | Matrix, wide or long data in; a grid of cells sized in mm out |
+| `calor_order()` | Sort rows and columns by a statistic, a vector, a function or the memo sort |
+| `calor_dendro()` | Cluster, reorder and draw aligned trees; accepts `hclust` and `dendrogram` objects |
+| `calor_split()` | Cut the grid into slices by a grouping vector or by cutting the tree |
+| `calor_anno()` | Categorical or numeric tracks on any side |
+| `calor_margin()` | Row or column summaries as bars or boxplots |
+| `calor_panel()` | Any ggplot of your own beside the heatmap, aligned row by row or column by column |
+| `calor_text()` | Write the values in the cells |
+| `calor_bracket()` | Labelled brackets over groups of rows or columns |
+| `calor_legend("histogram")` | A histogram of the values in place of the colour bar |
+| `calor_labels()` | Where row and column names go, and how they look |
+| `calor_radial()` | Bend the grid into a ring |
+| `calor_interactive()`, `calor_girafe()` | Tooltips and linked highlighting through ggiraph |
+| `calor_save()`, `calor_size()` | Save at, or report, the natural size |
+| `ggwaffle()` | Unit charts on the same cell grid |
 
-Large matrices rasterise automatically above 20,000 cells, and row or column
-labels disappear when cells are thinner than 2 mm. Rings come from `calor_radial()`;
-tracks are not drawn there.
+The [gallery](https://loukesio.github.io/ggcalor/articles/gallery.html) has
+a recipe for each of these.
 
-More recipes, including a correlation matrix, a radial ring, hex cells and
-calendars, are in `vignette("gallery")`.
+## How it compares
 
-## Roadmap
+[ComplexHeatmap](https://bioconductor.org/packages/ComplexHeatmap/) is the
+most complete heatmap toolkit in R, and much of ggcalor's design follows it.
+It uses its own grid-based drawing system, though, so its plots don't take
+ggplot2 themes and scales. [pheatmap](https://cran.r-project.org/package=pheatmap)
+is quick for a clustered heatmap but offers little beyond that.
+`geom_tile()` is pure ggplot2 but has no trees, tracks or fixed cell size.
+ggcalor aims for ComplexHeatmap's layouts with ggplot2's interface.
 
-Per-slice colour scales, interactive dendrograms, and a pkgdown site.
+## Data
+
+`measles` comes from Project Tycho (van Panhuis et al. 2013) and
+`luad_alterations` from TCGA via cBioPortal; both are in the form
+ComplexHeatmap ships them. `dune` is from vegan and `penguins` from
+palmerpenguins. The country names in `dvs_members` are real, but the
+memberships are simulated.
