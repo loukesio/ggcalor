@@ -11,3 +11,4 @@
 ^pkgdown$
 ^man/figures/readme-.*\.png$
 ^data-raw$
+^\.github$
