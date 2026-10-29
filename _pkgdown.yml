@@ -19,7 +19,7 @@ reference:
   - title: Decorate
     contents: [calor_anno, calor_margin, calor_panel, calor_bracket, calor_text, calor_legend, calor_labels]
   - title: Interact and save
-    contents: [calor_interactive, calor_girafe, calor_save, calor_size]
+    contents: [calor_interactive, calor_girafe, calor_save, calor_size, calor_gtable, calor_anchors]
   - title: Other cell grids
     contents: [calor_radial, ggwaffle]
   - title: Data

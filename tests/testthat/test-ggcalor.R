@@ -121,3 +121,42 @@ test_that("calor_panel() replaces the user's along-axis scale and keeps the rest
   expect_s3_class(g, "gtable")
   expect_error(calor_panel(1), "ggplot")
 })
+
+test_that("a heatmap with trees and tracks nests inside another patchwork", {
+  hm <- ggcalor(m) + calor_dendro(rows = TRUE, cols = TRUE) +
+    calor_anno(top = data.frame(g = rep(c("a", "b"), length.out = ncol(m)), row.names = colnames(m)))
+  other <- ggplot(mtcars, aes(wt, mpg)) + geom_point()
+  pw <- patchwork::wrap_plots(hm, other) + patchwork::plot_annotation(tag_levels = "A")
+  g <- patchwork::patchworkGrob(pw)
+  expect_s3_class(g, "gtable")
+  f <- tempfile(fileext = ".png")
+  ragg::agg_png(f, 800, 400)
+  expect_no_error(grid::grid.draw(g))
+  grDevices::dev.off()
+  # The stand-in table's panel is exactly the cells.
+  grDevices::pdf(NULL)
+  tb <- plot_table.calor(hm, "keep")
+  grDevices::dev.off()
+  panel <- tb$layout[tb$layout$name == "panel", ]
+  expect_equal(grid::convertHeight(tb$heights[panel$t], "mm", valueOnly = TRUE), nrow(m) * 5)
+  expect_equal(grid::convertWidth(tb$widths[panel$l], "mm", valueOnly = TRUE), ncol(m) * 5)
+  # A plain heatmap still goes through patchwork's usual alignment.
+  expect_s3_class(patchwork::patchworkGrob(patchwork::wrap_plots(ggcalor(m), other)), "gtable")
+})
+
+test_that("calor_gtable() has one panel over the cells and calor_anchors() finds rows", {
+  p <- ggcalor(m) + calor_dendro(rows = TRUE) + calor_split(rows = 2, gap = 2)
+  g <- calor_gtable(p)
+  expect_equal(sum(g$layout$name == "panel"), 1)
+  lr <- resolve_layout(calor_state(p))$lay$rows
+  expect_equal(attr(g, "calor_ranges")$y, c(0.5, lr$L + 0.5))
+  a <- calor_anchors(p, rows = lr$order[1:2], side = "right")
+  # The first row in the final order is the top one.
+  expect_equal(a$y, lr$L + 1 - lr$pos[1:2])
+  expect_true(all(a$x == ncol(m) + 0.5))
+  # Outside the row tree on the left.
+  expect_lt(calor_anchors(p, rows = lr$order[1], side = "left")$x, 0.5)
+  expect_equal(calor_anchors(p, rows = lr$order[1], side = "left", outside = FALSE)$x, 0.5)
+  expect_error(calor_anchors(p, rows = "nope"), "Not rows")
+  expect_error(calor_anchors(p), "one of")
+})

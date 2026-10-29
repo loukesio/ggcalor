@@ -116,6 +116,35 @@ follow the species. Because the panels match by name, the order of rows in
 your data frame does not matter. A legend in a panel (say, bars filled by
 group) joins the heatmap's legends.
 
+## Next to other plots
+
+A ggcalor plot combines with any other ggplot through
+[patchwork](https://patchwork.data-imaging.com/). The cells act as the
+heatmap's panel, so neighbouring panels line up with the first and last row
+of cells, while the trees, tracks and legends take the space around them.
+
+The heatmap has a fixed size, so give its column a width of `NA` in
+`plot_layout()`; patchwork 1.3 fails on a fixed-size plot with a numeric
+width.
+
+```{r patchwork, calor.autosize = FALSE, fig.width = 9.5, fig.height = 5.6}
+library(patchwork)
+pca <- prcomp(dune)
+sites_pca <- data.frame(pca$x[, 1:2], moisture = dune.env$Moisture)
+scatter <- ggplot(sites_pca, aes(PC1, PC2, colour = moisture)) +
+  geom_point(size = 2) +
+  scale_colour_brewer(palette = "Blues") +
+  theme_bw(base_size = 9)
+
+heat <- ggcalor(t(dune), cell_size = 3.2) +
+  calor_dendro(rows = TRUE, cols = TRUE, k = 3) +
+  calor_anno(top = sites["moisture"]) +
+  scale_fill_distiller(palette = "Greens", direction = 1) +
+  labs(fill = "cover")
+
+heat + scatter + plot_layout(widths = c(NA, 1)) + plot_annotation(tag_levels = "A")
+```
+
 ## Scaled columns, glyphs and brackets
 
 When columns are measured in different units, scale them first.

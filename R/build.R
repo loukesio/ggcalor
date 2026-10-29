@@ -176,6 +176,77 @@ S7::method(ggplot_build, class_calor) <- function(plot, ...) {
 
 # ---- Assemble ---------------------------------------------------------------
 S7::method(ggplot_gtable, class_calor_built) <- function(data, ...) {
+  out <- calor_compose(data)
+  if (inherits(out, "patchwork")) patchwork::patchworkGrob(out) else out
+}
+
+# Inside another patchwork, a heatmap with trees or tracks goes in as a table
+# shaped like an ordinary ggplot: the cells are its panel and everything
+# around them (trees, tracks, names, legends) is axis space. patchwork then
+# lines the cells up with the panels of the neighbouring plots. Registered in
+# .onLoad, as plot_table() is internal to patchwork.
+plot_table.calor <- function(x, guides) {
+  # patchwork puts its tag on the plot as labs(tag); it goes on the stand-in.
+  tag <- x@labels$tag
+  x@labels$tag <- NULL
+  built <- ggplot2::ggplot_build(x)
+  out <- calor_compose(built)
+  if (!inherits(out, "patchwork")) {
+    x@labels$tag <- tag
+    return(NextMethod())
+  }
+  cells_table(built, out, guides, tag, x@theme)
+}
+
+# A table shaped like an ordinary ggplot whose only panel is the cells, with
+# the heatmap's own grob drawn over it. Carries the cell coordinates of the
+# panel edges as attribute "calor_ranges".
+cells_table <- function(built, out, guides = "keep", tag = NULL, theme = NULL) {
+  if (inherits(out, "patchwork")) {
+    comp <- patchwork::patchworkGrob(out)
+    # The cells: the panel in the design row and column of the heatmap.
+    at <- attr(out, "calor_cells")
+    pl <- comp$layout[grepl("^panel", comp$layout$name) & comp$layout$name != "panel-area", ]
+    t <- b <- sort(unique(pl$t))[at[["row"]]]
+    l <- r <- sort(unique(pl$l))[at[["col"]]]
+  } else {
+    # One panel per slice: the cells span them all.
+    comp <- out
+    pl <- comp$layout[grepl("^panel", comp$layout$name), ]
+    t <- min(pl$t); b <- max(pl$b); l <- min(pl$l); r <- max(pl$r)
+  }
+  mm <- function(u, conv) sum(vapply(seq_along(u), function(i) conv(u[i], "mm", valueOnly = TRUE), numeric(1)))
+  h <- function(i) mm(comp$heights[i], grid::convertHeight)
+  w <- function(i) mm(comp$widths[i], grid::convertWidth)
+  nh <- length(comp$heights); nw <- length(comp$widths)
+  above <- h(seq_len(t - 1)); cells_h <- h(t:b); below <- h(setdiff(seq_len(nh), seq_len(b)))
+  left <- w(seq_len(l - 1)); cells_w <- w(l:r); right <- w(setdiff(seq_len(nw), seq_len(r)))
+
+  stand_in <- ggplot() + theme_void() + labs(tag = tag)
+  if (!is.null(theme)) stand_in <- stand_in + theme(plot.tag = calc_element("plot.tag", complete_theme(theme)))
+  tbl <- utils::getFromNamespace("plot_table", "patchwork")(stand_in, guides)
+  row_of <- function(nm) tbl$layout$t[tbl$layout$name == nm][1]
+  col_of <- function(nm) tbl$layout$l[tbl$layout$name == nm][1]
+  tbl$heights[row_of("panel")] <- grid::unit(cells_h, "mm")
+  tbl$widths[col_of("panel")] <- grid::unit(cells_w, "mm")
+  tbl$heights[row_of("axis-t")] <- grid::unit(above, "mm")
+  tbl$heights[row_of("axis-b")] <- grid::unit(below, "mm")
+  tbl$widths[col_of("axis-l")] <- grid::unit(left, "mm")
+  tbl$widths[col_of("axis-r")] <- grid::unit(right, "mm")
+  # Draw the whole heatmap from the panel cell, shifted so its cells land on it.
+  vp <- grid::viewport(x = grid::unit(-left, "mm"), y = grid::unit(-below, "mm"),
+                       width = grid::unit(left + cells_w + right, "mm"),
+                       height = grid::unit(above + cells_h + below, "mm"), just = c(0, 0))
+  tbl <- gtable::gtable_add_grob(tbl, grid::gTree(children = grid::gList(comp), vp = vp),
+                                 t = row_of("panel"), l = col_of("panel"), clip = "off", z = Inf, name = "calor")
+  lay <- built@calor$lay
+  attr(tbl, "calor_ranges") <- list(x = c(0.5, lay$cols$L + 0.5), y = c(0.5, lay$rows$L + 0.5))
+  tbl
+}
+
+# The heatmap with its trees and tracks: a patchwork, or a plain gtable when
+# there is nothing to attach.
+calor_compose <- function(data) {
   st <- data@calor
   lr <- st$lay$rows; lc <- st$lay$cols
   top <- bottom <- left <- right <- list()
@@ -253,12 +324,18 @@ S7::method(ggplot_gtable, class_calor_built) <- function(data, ...) {
     main <- main + theme(axis.text.y.right = element_blank())
   }
   top <- lapply(top, match_legend_theme, mt); bottom <- lapply(bottom, match_legend_theme, mt)
-  # A calor_panel()'s value axis spills into the empty corner instead of
-  # pushing the heatmap away from the row tracks.
-  free_panels <- function(ps, side) Map(function(p, ty) {
-    if (ty == "panel") patchwork::free(p, type = "space", side = "l") else p
+  # Track names and panel axes on the left of column tracks spill into the
+  # empty corner instead of pushing the cells away from the row tracks; the
+  # outer margin grows by whatever does not fit in the corner.
+  corner_mm <- (if (lr$show_tree) lr$dspec$size else 0) +
+    sum(vapply(st$anno$left, function(tr) tr$size %||% 4, numeric(1)))
+  overhang <- 0
+  free_left <- function(ps, side) Map(function(p, ty) {
+    if (ty == "tree") return(p)
+    overhang <<- max(overhang, left_extent_mm(p) - corner_mm)
+    patchwork::free(p, type = "space", side = "l")
   }, ps, types(side))
-  top <- free_panels(top, "top"); bottom <- free_panels(bottom, "bottom")
+  top <- free_left(top, "top"); bottom <- free_left(bottom, "bottom")
   # Row tracks: let rotated names spill into the empty corners instead of
   # pushing the bottom tracks away from the heatmap.
   side_track <- function(p) patchwork::free(match_legend_theme(p, mt), type = "space", side = "b")
@@ -282,16 +359,37 @@ S7::method(ggplot_gtable, class_calor_built) <- function(data, ...) {
     else if (cc == main_id) r
     else "#"
   }, character(1)), collapse = ""), character(1))
+  # The plot with the last letter hosts the patchwork, and must be the
+  # heatmap: a free() host makes the whole composition free when it is nested
+  # in another patchwork.
+  design <- gsub(main_id, "z", design, fixed = TRUE)
+  names(pieces)[names(pieces) == main_id] <- "z"
   pw <- patchwork::wrap_plots(pieces, design = paste(design, collapse = "\n")) +
     patchwork::plot_layout(guides = "collect")
   keep <- intersect(c("plot.title", "plot.subtitle", "plot.caption", "text", "title",
                       "plot.title.position", "plot.caption.position", "plot.background", "plot.margin",
                       "legend.title", "legend.text", "legend.key.size", "legend.spacing.y",
                       "legend.position", "legend.direction", "legend.justification"), names(th))
+  ann <- th[keep]
+  if (overhang > 0) {
+    pm <- calc_element("plot.margin", mt)
+    pm[4] <- pm[4] + grid::unit(overhang, "mm")
+    ann$plot.margin <- pm
+  }
   pw <- pw + patchwork::plot_annotation(
-    title = titles$title, subtitle = titles$subtitle, caption = titles$caption, theme = th[keep]
+    title = titles$title, subtitle = titles$subtitle, caption = titles$caption, theme = ann
   )
-  patchwork::patchworkGrob(pw)
+  # Where the cells sit in the design, for plot_table.calor().
+  attr(pw, "calor_cells") <- c(row = nt + 1, col = nl + 1)
+  pw
+}
+
+# Width of everything left of a plot's panel: axis, title, margin.
+left_extent_mm <- function(p) {
+  g <- ggplot2::ggplotGrob(p)
+  l <- min(g$layout$l[grepl("^panel", g$layout$name)])
+  if (l <= 1) return(0)
+  sum(vapply(seq_len(l - 1), function(i) grid::convertWidth(g$widths[i], "mm", valueOnly = TRUE), numeric(1)))
 }
 
 # A user's scale_fill_*() keeps ggplot2's grey50 for NA unless told otherwise;
