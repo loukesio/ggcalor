@@ -1,0 +1,21 @@
+# RAS/RAF/MEK/JNK pathway alterations in lung adenocarcinoma
+
+Alterations in 22 pathway genes across 172 TCGA lung adenocarcinoma
+samples, one cell per gene and sample. Used by the oncoprint recipe.
+
+## Usage
+
+``` r
+luad_alterations
+```
+
+## Format
+
+A character matrix with genes in rows and TCGA sample IDs in columns.
+Values are `"mutation"`, `"amplification"`, `"deep deletion"`,
+`"mutation + amplification"`, or `NA` for no alteration.
+
+## Source
+
+TCGA lung adenocarcinoma (provisional) via cBioPortal, as shipped with
+the 'ComplexHeatmap' package; see `data-raw/luad_alterations.R`.
