@@ -46,11 +46,68 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="ggcalor">ggcalor<a class="anchor" aria-label="anchor" href="#ggcalor"></a>
 </h1></div>
-<p><strong>Heatmaps as a grammar of cells, built on ggplot2.</strong></p>
-<p>ggcalor draws heatmaps and other cell grids (oncoprints, correlation matrices, calendars, rings, waffles) as ordinary ggplot objects. You add clustering, splits, annotation tracks and margins with <code>+</code>, the same way you add a theme or a scale. <em>Calor</em> is Spanish for heat.</p>
+<!-- badges: start -->
+
+<blockquote>
+<p><strong>Heatmaps as a grammar of cells, built on ggplot2.</strong> Clustering · splits · annotation tracks · margins · rings and waffles, all added with <code>+</code>.</p>
+</blockquote>
+<p>📖 <strong>Website &amp; full documentation:</strong> <a href="https://loukesio.github.io/ggcalor/" class="uri">https://loukesio.github.io/ggcalor/</a> · 🖼️ <strong>Gallery:</strong> <a href="https://loukesio.github.io/ggcalor/articles/gallery.html" class="uri">https://loukesio.github.io/ggcalor/articles/gallery.html</a></p>
+<p><strong>ggcalor</strong> draws heatmaps and other cell grids (oncoprints, correlation matrices, calendars, rings, waffles) as ordinary ggplot objects. You add clustering, splits, annotation tracks and margins with <code>+</code>, the same way you add a theme or a scale. <em>Calor</em> is Spanish for heat.</p>
+<table align="center" class="table"><tr>
+<td align="center" width="25%">
+<a href="#clustering-splits-and-annotations"><img src="reference/figures/readme-dune.png" alt="Clustered heatmap"><br><b>Clustering</b></a><br><sub>trees, splits and tracks</sub>
+</td>
+<td align="center" width="25%">
+<a href="#oncoprints"><img src="reference/figures/readme-oncoprint.png" alt="Oncoprint"><br><b>Oncoprints</b></a><br><sub>discrete fills and memo sort</sub>
+</td>
+<td align="center" width="25%">
+<a href="#beyond-heatmaps"><img src="reference/figures/readme-ring.png" alt="Ring heatmap"><br><b>Rings</b></a><br><sub>the grid bent into a circle</sub>
+</td>
+<td align="center" width="25%">
+<a href="#beyond-heatmaps"><img src="reference/figures/readme-waffle.png" alt="Waffle chart"><br><b>Waffles</b></a><br><sub>unit charts on the same grid</sub>
+</td>
+</tr></table>
+<hr>
+<div class="section level2">
+<h2 id="contents">Contents<a class="anchor" aria-label="anchor" href="#contents"></a>
+</h2>
+<ol style="list-style-type: decimal">
+<li><a href="#installation">Installation</a></li>
+<li>
+<a href="#your-first-heatmap">Your first heatmap</a>: one matrix, one figure</li>
+<li>
+<a href="#why-ggcalor">Why ggcalor</a>: cells with a real size, verbs you add</li>
+<li>
+<a href="#a-tour">A tour</a>: clustering, oncoprints, rings and waffles</li>
+<li>
+<a href="#the-verbs">The verbs</a> · <a href="#how-it-compares">How it compares</a> · <a href="#data">Data</a>
+</li>
+</ol>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p><img align="right" src="reference/figures/logo.gif" alt="ggcalor logo: an animated grid of warm and cool cells" width="300"></p>
+<p>ggcalor needs R 4.1 and ggplot2 4.0 or later. Install the development version from GitHub:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"loukesio/ggcalor"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># ...or with remotes</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"loukesio/ggcalor"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># and load it</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/loukesio/ggcalor" class="external-link">ggcalor</a></span><span class="op">)</span></span></code></pre></div>
+<p><br clear="right"></p>
+</div>
+<div class="section level2">
+<h2 id="your-first-heatmap">Your first heatmap<a class="anchor" aria-label="anchor" href="#your-first-heatmap"></a>
+</h2>
+<p>Measles cases in every US state from 1930 to 2001, split at the year the vaccine was licensed, with yearly totals on top:</p>
 <p align="center">
 <img src="reference/figures/readme-measles.png" alt="Measles cases in US states from 1930 to 2001, split at the 1963 vaccine"></p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/loukesio/ggcalor" class="external-link">ggcalor</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">era</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">measles</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">1963</span>, <span class="st">"before vaccine"</span>, <span class="st">"after vaccine"</span><span class="op">)</span></span>
@@ -64,13 +121,6 @@
 <span>                       na.value <span class="op">=</span> <span class="st">"grey95"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Measles cases in the United States, 1930–2001"</span>,</span>
 <span>       subtitle <span class="op">=</span> <span class="st">"The vaccine was licensed in 1963"</span>, fill <span class="op">=</span> <span class="st">"cases"</span><span class="op">)</span></span></code></pre></div>
-<div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h2>
-<p>ggcalor needs R 4.1 and ggplot2 4.0 or later.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"loukesio/ggcalor"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="why-ggcalor">Why ggcalor<a class="anchor" aria-label="anchor" href="#why-ggcalor"></a>
@@ -268,7 +318,14 @@
 </ul>
 </div>
 
-
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/loukesio/ggcalor/actions/workflows/pkgdown.yaml" class="external-link"><img src="https://github.com/loukesio/ggcalor/actions/workflows/pkgdown.yaml/badge.svg" alt="pkgdown"></a></li>
+<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
+<li><a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a></li>
+</ul>
+</div>
 
   </aside>
 </div>

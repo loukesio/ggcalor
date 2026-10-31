@@ -1,11 +1,59 @@
 # ggcalor
 
-**Heatmaps as a grammar of cells, built on ggplot2.**
+> **Heatmaps as a grammar of cells, built on ggplot2.** Clustering ·
+> splits · annotation tracks · margins · rings and waffles, all added
+> with `+`.
 
-ggcalor draws heatmaps and other cell grids (oncoprints, correlation
+📖 **Website & full documentation:**
+<https://loukesio.github.io/ggcalor/> · 🖼️ **Gallery:**
+<https://loukesio.github.io/ggcalor/articles/gallery.html>
+
+**ggcalor** draws heatmaps and other cell grids (oncoprints, correlation
 matrices, calendars, rings, waffles) as ordinary ggplot objects. You add
 clustering, splits, annotation tracks and margins with `+`, the same way
 you add a theme or a scale. *Calor* is Spanish for heat.
+
+[TABLE]
+
+------------------------------------------------------------------------
+
+## Contents
+
+1.  [Installation](#installation)
+2.  [Your first heatmap](#your-first-heatmap): one matrix, one figure
+3.  [Why ggcalor](#why-ggcalor): cells with a real size, verbs you add
+4.  [A tour](#a-tour): clustering, oncoprints, rings and waffles
+5.  [The verbs](#the-verbs) · [How it compares](#how-it-compares) ·
+    [Data](#data)
+
+------------------------------------------------------------------------
+
+## Installation
+
+![ggcalor logo: an animated grid of warm and cool
+cells](reference/figures/logo.gif)
+
+ggcalor needs R 4.1 and ggplot2 4.0 or later. Install the development
+version from GitHub:
+
+``` r
+
+# install.packages("pak")
+pak::pak("loukesio/ggcalor")
+
+# ...or with remotes
+remotes::install_github("loukesio/ggcalor")
+
+# and load it
+library(ggcalor)
+```
+
+  
+
+## Your first heatmap
+
+Measles cases in every US state from 1930 to 2001, split at the year the
+vaccine was licensed, with yearly totals on top:
 
 ![Measles cases in US states from 1930 to 2001, split at the 1963
 vaccine](reference/figures/readme-measles.png)
@@ -25,16 +73,6 @@ ggcalor(measles, cell_size = 2.6, cell_gap = 0.06, border = NA) +
                        na.value = "grey95") +
   labs(title = "Measles cases in the United States, 1930–2001",
        subtitle = "The vaccine was licensed in 1963", fill = "cases")
-```
-
-## Installation
-
-ggcalor needs R 4.1 and ggplot2 4.0 or later.
-
-``` r
-
-# install.packages("pak")
-pak::pak("loukesio/ggcalor")
 ```
 
 ## Why ggcalor
