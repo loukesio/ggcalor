@@ -80,7 +80,7 @@
 <li>
 <a href="#a-tour">A tour</a>: clustering, oncoprints, rings and waffles</li>
 <li>
-<a href="#the-verbs">The verbs</a> · <a href="#how-it-compares">How it compares</a> · <a href="#data">Data</a>
+<a href="#interactive">Interactive</a> · <a href="#the-verbs">The verbs</a> · <a href="#how-it-compares">How it compares</a> · <a href="#data">Data</a>
 </li>
 </ol>
 <hr>
@@ -148,9 +148,14 @@
 <span><span class="fu"><a href="reference/ggcalor.html">ggcalor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">dune</span><span class="op">)</span>, cell_size <span class="op">=</span> <span class="fl">4.2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="reference/calor_dendro.html">calor_dendro</a></span><span class="op">(</span>rows <span class="op">=</span> <span class="cn">TRUE</span>, cols <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="reference/calor_split.html">calor_split</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="reference/calor_anno.html">calor_anno</a></span><span class="op">(</span>top <span class="op">=</span> <span class="va">sites</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="reference/calor_margin.html">calor_margin</a></span><span class="op">(</span>right <span class="op">=</span> <span class="st">"mean"</span>, fill <span class="op">=</span> <span class="st">"#3B8F5C"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_fill_distiller</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"YlGn"</span>, direction <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="reference/calor_anno.html">calor_anno</a></span><span class="op">(</span>top <span class="op">=</span> <span class="va">sites</span>, colours <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    <span class="co"># Quiet, earthy tones keep the eye on the cells.</span></span>
+<span>    management <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#C9C1B1"</span>, <span class="st">"#919F89"</span>, <span class="st">"#57717C"</span>, <span class="st">"#EDBDAE"</span><span class="op">)</span>,</span>
+<span>    moisture <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#E4EEF0"</span>, <span class="st">"#BDD3CE"</span>, <span class="st">"#5F97A4"</span>, <span class="st">"#2C3B4D"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="reference/calor_margin.html">calor_margin</a></span><span class="op">(</span>right <span class="op">=</span> <span class="st">"mean"</span>, fill <span class="op">=</span> <span class="st">"#708C69"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="co"># Cream to sage to deep teal, after the "seafarer" palette in ltc.</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradientn</a></span><span class="op">(</span>colours <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#FCF3E3"</span>, <span class="st">"#BDD3CE"</span>, <span class="st">"#708C69"</span>, <span class="st">"#013D5A"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Wet meadows grow their own plant community"</span>,</span>
 <span>       subtitle <span class="op">=</span> <span class="st">"Cover of 30 plant species in 20 Dutch dune meadows"</span>,</span>
 <span>       caption <span class="op">=</span> <span class="st">"Data: vegan::dune"</span>, fill <span class="op">=</span> <span class="st">"cover"</span><span class="op">)</span></span></code></pre></div>
@@ -225,6 +230,18 @@
 </div>
 </div>
 <div class="section level2">
+<h2 id="interactive">Interactive<a class="anchor" aria-label="anchor" href="#interactive"></a>
+</h2>
+<p>Add <code><a href="reference/calor_interactive.html">calor_interactive()</a></code> to any plot and render it with <code><a href="reference/calor_girafe.html">calor_girafe()</a></code> (this needs the ggiraph package). Every cell gets a tooltip, and hovering highlights a cell, its row or its column. Rings, waffles, hex cells and smooth surfaces all work.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ggcalor.html">ggcalor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">dune</span><span class="op">)</span>, cell_size <span class="op">=</span> <span class="fl">4.2</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="reference/calor_dendro.html">calor_dendro</a></span><span class="op">(</span>rows <span class="op">=</span> <span class="cn">TRUE</span>, cols <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="reference/calor_anno.html">calor_anno</a></span><span class="op">(</span>top <span class="op">=</span> <span class="va">sites</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="reference/calor_interactive.html">calor_interactive</a></span><span class="op">(</span>data_id <span class="op">=</span> <span class="st">"row"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/calor_girafe.html">calor_girafe</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<p>GitHub can’t show live widgets, so <a href="https://loukesio.github.io/ggcalor/articles/gallery.html#interactive"><strong>try them in the gallery</strong></a>.</p>
+</div>
+<div class="section level2">
 <h2 id="the-verbs">The verbs<a class="anchor" aria-label="anchor" href="#the-verbs"></a>
 </h2>
 <table class="table">
@@ -289,7 +306,7 @@
 <td>
 <code><a href="reference/calor_interactive.html">calor_interactive()</a></code>, <code><a href="reference/calor_girafe.html">calor_girafe()</a></code>
 </td>
-<td>Tooltips and linked highlighting through ggiraph</td>
+<td>Tooltips and linked highlighting through ggiraph; <code>calor_waffle(interactive = TRUE)</code> for waffles</td>
 </tr>
 <tr>
 <td>

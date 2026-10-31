@@ -8,12 +8,7 @@ except the hovered cells.
 ## Usage
 
 ``` r
-calor_girafe(
-  plot,
-  ...,
-  hover_css = "stroke:black;stroke-width:1.2px;",
-  dim_css = "opacity:0.35;"
-)
+calor_girafe(plot, ..., hover_css = NULL, dim_css = NULL)
 ```
 
 ## Arguments
@@ -32,11 +27,12 @@ calor_girafe(
 
 - hover_css:
 
-  CSS for hovered cells.
+  CSS for hovered cells; `NULL` picks a default.
 
 - dim_css:
 
-  CSS for the other cells while hovering.
+  CSS for the other cells while hovering; `NULL` fades them, or veils
+  them in white for waffles, hex and circle cells and smooth surfaces.
 
 ## Value
 

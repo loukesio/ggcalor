@@ -16,7 +16,8 @@ calor_waffle(
   rows = 10,
   cell_size = 4,
   cell_gap = 0.15,
-  cell_radius = 0.3
+  cell_radius = 0.3,
+  interactive = FALSE
 )
 ```
 
@@ -42,6 +43,12 @@ calor_waffle(
 
   Cell geometry, as in
   [`ggcalor()`](https://loukesio.github.io/ggcalor/reference/ggcalor.md).
+
+- interactive:
+
+  Add 'ggiraph' tooltips; hovering a cell highlights its category in
+  every waffle. Render with
+  [`calor_girafe()`](https://loukesio.github.io/ggcalor/reference/calor_girafe.md).
 
 ## Value
 

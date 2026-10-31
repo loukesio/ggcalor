@@ -23,8 +23,8 @@ you add a theme or a scale. *Calor* is Spanish for heat.
 2.  [Your first heatmap](#your-first-heatmap): one matrix, one figure
 3.  [Why ggcalor](#why-ggcalor): cells with a real size, verbs you add
 4.  [A tour](#a-tour): clustering, oncoprints, rings and waffles
-5.  [The verbs](#the-verbs) · [How it compares](#how-it-compares) ·
-    [Data](#data)
+5.  [Interactive](#interactive) · [The verbs](#the-verbs) · [How it
+    compares](#how-it-compares) · [Data](#data)
 
 ------------------------------------------------------------------------
 
@@ -126,9 +126,14 @@ levels(sites$management) <- c("biological", "hobby", "nature reserve", "standard
 ggcalor(t(dune), cell_size = 4.2) +
   calor_dendro(rows = TRUE, cols = TRUE) +
   calor_split(cols = 3) +
-  calor_anno(top = sites) +
-  calor_margin(right = "mean", fill = "#3B8F5C") +
-  scale_fill_distiller(palette = "YlGn", direction = 1) +
+  calor_anno(top = sites, colours = list(
+    # Quiet, earthy tones keep the eye on the cells.
+    management = c("#C9C1B1", "#919F89", "#57717C", "#EDBDAE"),
+    moisture = c("#E4EEF0", "#BDD3CE", "#5F97A4", "#2C3B4D")
+  )) +
+  calor_margin(right = "mean", fill = "#708C69") +
+  # Cream to sage to deep teal, after the "seafarer" palette in ltc.
+  scale_fill_gradientn(colours = c("#FCF3E3", "#BDD3CE", "#708C69", "#013D5A")) +
   labs(title = "Wet meadows grow their own plant community",
        subtitle = "Cover of 30 plant species in 20 Dutch dune meadows",
        caption = "Data: vegan::dune", fill = "cover")
@@ -221,6 +226,28 @@ The same grid also draws smooth surfaces and waffle charts.
 
 [TABLE]
 
+## Interactive
+
+Add
+[`calor_interactive()`](https://loukesio.github.io/ggcalor/reference/calor_interactive.md)
+to any plot and render it with
+[`calor_girafe()`](https://loukesio.github.io/ggcalor/reference/calor_girafe.md)
+(this needs the ggiraph package). Every cell gets a tooltip, and
+hovering highlights a cell, its row or its column. Rings, waffles, hex
+cells and smooth surfaces all work.
+
+``` r
+
+p <- ggcalor(t(dune), cell_size = 4.2) +
+  calor_dendro(rows = TRUE, cols = TRUE) +
+  calor_anno(top = sites) +
+  calor_interactive(data_id = "row")
+calor_girafe(p)
+```
+
+GitHub can’t show live widgets, so [**try them in the
+gallery**](https://loukesio.github.io/ggcalor/articles/gallery.html#interactive).
+
 ## The verbs
 
 | Verb | What it does |
@@ -237,7 +264,7 @@ The same grid also draws smooth surfaces and waffle charts.
 | `calor_legend("histogram")` | A histogram of the values in place of the colour bar |
 | [`calor_labels()`](https://loukesio.github.io/ggcalor/reference/calor_labels.md) | Where row and column names go, and how they look |
 | [`calor_radial()`](https://loukesio.github.io/ggcalor/reference/calor_radial.md) | Bend the grid into a ring |
-| [`calor_interactive()`](https://loukesio.github.io/ggcalor/reference/calor_interactive.md), [`calor_girafe()`](https://loukesio.github.io/ggcalor/reference/calor_girafe.md) | Tooltips and linked highlighting through ggiraph |
+| [`calor_interactive()`](https://loukesio.github.io/ggcalor/reference/calor_interactive.md), [`calor_girafe()`](https://loukesio.github.io/ggcalor/reference/calor_girafe.md) | Tooltips and linked highlighting through ggiraph; `calor_waffle(interactive = TRUE)` for waffles |
 | [`calor_save()`](https://loukesio.github.io/ggcalor/reference/calor_save.md), [`calor_size()`](https://loukesio.github.io/ggcalor/reference/calor_size.md) | Save at, or report, the natural size |
 | [`calor_waffle()`](https://loukesio.github.io/ggcalor/reference/calor_waffle.md) | Unit charts on the same cell grid |
 
