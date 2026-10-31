@@ -199,8 +199,8 @@ and the years run clockwise around a ring, with the months from January
 
 ``` r
 
-ggcalor(global_temp, cell_size = 2.6, border = NA) +
-  calor_radial(inner.radius = 0.4, gap = 0.25, label_size = 8) +
+ggcalor(global_temp, cell_size = 3.4, border = NA) +
+  calor_radial(inner.radius = 0.5, gap = 0.35, label_size = 9) +
   calor_labels(every = c(rows = 3, cols = 20)) +
   anomaly +
   labs(title = "A planet running a fever",
