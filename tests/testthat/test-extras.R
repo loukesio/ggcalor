@@ -40,7 +40,9 @@ test_that("radial coordinates render without tracks and warn with them", {
   r2 <- r + theme(legend.position = "right")
   expect_equal(r2@theme$legend.position, "right")
   expect_gt(calor_size(r)[1], calor_size(ggcalor(m) + coord_radial())[1] - 1e-9)
-  expect_s3_class(ggplotGrob(ggcalor(dvs_members, "month", "country", "trait") + calor_radial()), "gtable")
+  long <- data.frame(row = rep(month.abb, 5), col = rep(paste0("c", 1:5), each = 12),
+                     value = sample(c("a", "b", NA), 60, TRUE))
+  expect_s3_class(ggplotGrob(ggcalor(long, "row", "col", "value") + calor_radial()), "gtable")
 })
 
 test_that("waffle allocates cells by largest remainder", {

@@ -61,17 +61,17 @@ p <- ggcalor(v, cell_size = 2.4, smooth = "contour", smooth_sigma = 1, labels = 
        caption = "Data: datasets::volcano", fill = "height (m)")
 fig(p, "volcano")
 
-p <- ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
-             cell_size = 3.6, border = "white", na_fill = "#EFECE6") +
-  calor_radial(inner.radius = 0.42, gap = 0.2, label_size = 8) +
-  scale_fill_manual(values = c(Data = "#F3A712", Visualization = "#E4572E", Society = "#2E86AB"),
-                    breaks = c("Data", "Visualization", "Society"), na.value = "#EFECE6") +
-  labs(title = "A year of new members, country by country",
-       subtitle = "Months in which each country gained members, by their main interest",
-       caption = "Simulated memberships; real country names", fill = NULL) +
-  # The country names reach past the ring; keep them clear of the titles.
-  theme(plot.subtitle = element_text(margin = margin(b = 30)),
-        plot.caption = element_text(margin = margin(t = 30)))
+sun <- window(sunspot.month, start = c(1749, 1), end = c(2023, 12))
+sun <- matrix(sun, nrow = 12, dimnames = list(month.abb, 1749:2023))
+p <- ggcalor(sun, cell_size = 2.2, border = NA) +
+  calor_radial(inner.radius = 0.45, gap = 0.25, label_size = 8) +
+  # Label every 25th year and every third month.
+  scale_x_discrete(labels = function(x) ifelse(as.integer(x) %% 25 == 0, x, "")) +
+  scale_y_discrete(labels = function(x) ifelse(x %in% c("Jan", "Apr", "Jul", "Oct"), x, "")) +
+  scale_fill_viridis_c(option = "inferno", direction = -1) +
+  labs(title = "The Sun breathes in 11-year cycles",
+       subtitle = "Monthly mean sunspot number, 1749–2023",
+       caption = "Data: datasets::sunspot.month (WDC-SILSO)", fill = "sunspots")
 fig(p, "ring")
 
 penguins <- as.data.frame(table(island = palmerpenguins::penguins$island,

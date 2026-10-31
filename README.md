@@ -21,7 +21,7 @@ add a theme or a scale. *Calor* is Spanish for heat.
   <tr>
     <td align="center" width="25%"><a href="#clustering-splits-and-annotations"><img src="man/figures/readme-dune.png" alt="Clustered heatmap"><br><b>Clustering</b></a><br><sub>trees, splits and tracks</sub></td>
     <td align="center" width="25%"><a href="#oncoprints"><img src="man/figures/readme-oncoprint.png" alt="Oncoprint"><br><b>Oncoprints</b></a><br><sub>discrete fills and memo sort</sub></td>
-    <td align="center" width="25%"><a href="#rings"><img src="man/figures/readme-ring.png" alt="Ring heatmap"><br><b>Rings</b></a><br><sub>the grid bent into a circle</sub></td>
+    <td align="center" width="25%"><a href="#rings"><img src="man/figures/readme-ring.png" alt="Ring heatmap of sunspots"><br><b>Rings</b></a><br><sub>the grid bent into a circle</sub></td>
     <td align="center" width="25%"><a href="#surfaces-and-waffles"><img src="man/figures/readme-waffle.png" alt="Waffle chart"><br><b>Waffles</b></a><br><sub>unit charts on the same grid</sub></td>
   </tr>
 </table>
@@ -162,27 +162,28 @@ ggcalor(m, cell_size = 2.6, cell_gap = 0.25, border = NA, labels = "rows") +
 
 ### Rings
 
-`calor_radial()` bends the grid into a ring. Long data goes straight in
-through `rows`, `cols` and `value`: here, the months in which each of 130
-countries gained members of a society, coloured by their main interest. The
-country names sit around the ring, the months in the gap and the legend in
-the hole.
+`calor_radial()` bends the grid into a ring. Here each spoke is one year of
+sunspot counts since 1749 and each ring is one month, from January inside to
+December outside. The Sun's 11-year cycle shows as two dozen bursts of dark spokes
+around the circle, and the weak cycles of the early 1800s (the Dalton
+minimum) as a pale arc.
 
 ```r
-ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
-        cell_size = 3.6, border = "white", na_fill = "#EFECE6") +
-  calor_radial(inner.radius = 0.42, gap = 0.2, label_size = 8) +
-  scale_fill_manual(values = c(Data = "#F3A712", Visualization = "#E4572E", Society = "#2E86AB"),
-                    breaks = c("Data", "Visualization", "Society"), na.value = "#EFECE6") +
-  labs(title = "A year of new members, country by country",
-       subtitle = "Months in which each country gained members, by their main interest",
-       caption = "Simulated memberships; real country names", fill = NULL) +
-  # The country names reach past the ring; keep them clear of the titles.
-  theme(plot.subtitle = element_text(margin = margin(b = 30)),
-        plot.caption = element_text(margin = margin(t = 30)))
+sun <- window(sunspot.month, start = c(1749, 1), end = c(2023, 12))
+sun <- matrix(sun, nrow = 12, dimnames = list(month.abb, 1749:2023))
+
+ggcalor(sun, cell_size = 2.2, border = NA) +
+  calor_radial(inner.radius = 0.45, gap = 0.25, label_size = 8) +
+  # Label every 25th year and every third month.
+  scale_x_discrete(labels = function(x) ifelse(as.integer(x) %% 25 == 0, x, "")) +
+  scale_y_discrete(labels = function(x) ifelse(x %in% c("Jan", "Apr", "Jul", "Oct"), x, "")) +
+  scale_fill_viridis_c(option = "inferno", direction = -1) +
+  labs(title = "The Sun breathes in 11-year cycles",
+       subtitle = "Monthly mean sunspot number, 1749–2023",
+       caption = "Data: datasets::sunspot.month (WDC-SILSO)", fill = "sunspots")
 ```
 
-<p align="center"><img src="man/figures/readme-ring.png" alt="Ring of 130 countries by month" width="85%"></p>
+<p align="center"><img src="man/figures/readme-ring.png" alt="Ring of monthly sunspot numbers from 1749 to 2023" width="85%"></p>
 
 ### Surfaces and waffles
 
@@ -233,5 +234,5 @@ ggcalor aims for ComplexHeatmap's layouts with ggplot2's interface.
 `measles` comes from Project Tycho (van Panhuis et al. 2013) and
 `luad_alterations` from TCGA via cBioPortal; both are in the form
 ComplexHeatmap ships them. `dune` is from vegan and `penguins` from
-palmerpenguins. The country names in `dvs_members` are real, but the
-memberships are simulated.
+palmerpenguins. `sunspot.month`, `volcano`, `mtcars` and `AirPassengers` ship
+with R; the sunspot numbers come from WDC-SILSO, Royal Observatory of Belgium.

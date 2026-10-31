@@ -37,6 +37,9 @@ calor_size <- function(plot) {
   abs_mm <- function(u) sum(vapply(seq_along(u), function(i)
     grid::convertUnit(u[i], "mm", valueOnly = TRUE), numeric(1)))
   sz <- c(abs_mm(g$widths), abs_mm(g$heights))
+  # A title wider than the plot does not widen the gtable; the plot stays
+  # centred on the page, so add the shortfall on both sides.
+  sz[1] <- sz[1] + 2 * max(0, title_width_mm(plot, g) - sz[1])
   # Ring labels radiate beyond the panel and are not part of the gtable sizes.
   if (is_calor(plot) && !plot@coordinates$is_linear()) {
     th <- plot@theme
@@ -63,4 +66,14 @@ calor_size <- function(plot) {
     sz[2] <- sz[2] + max(0, hang - below)
   }
   sz
+}
+
+# Width of the widest title, subtitle or caption plus the side margins.
+title_width_mm <- function(plot, g) {
+  idx <- which(g$layout$name %in% c("title", "subtitle", "caption"))
+  if (!length(idx)) return(0)
+  w <- max(vapply(idx, function(i) grid::convertWidth(grid::grobWidth(g$grobs[[i]]), "mm", valueOnly = TRUE),
+                  numeric(1)))
+  pm <- calc_element("plot.margin", complete_theme(plot$theme))
+  w + grid::convertWidth(pm[2], "mm", valueOnly = TRUE) + grid::convertWidth(pm[4], "mm", valueOnly = TRUE)
 }

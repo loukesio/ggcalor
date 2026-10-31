@@ -23,7 +23,7 @@ reference:
   - title: Other cell grids
     contents: [calor_radial, calor_waffle]
   - title: Data
-    contents: [measles, luad_alterations, dvs_members]
+    contents: [measles, luad_alterations]
   - title: Internals
     contents: [class_calor, is_calor]
 articles:
