@@ -73,6 +73,8 @@
   Measles cases by US state and year
 - [`luad_alterations`](https://loukesio.github.io/ggcalor/reference/luad_alterations.md)
   : RAS/RAF/MEK/JNK pathway alterations in lung adenocarcinoma
+- [`global_temp`](https://loukesio.github.io/ggcalor/reference/global_temp.md)
+  : Global monthly temperature anomalies
 
 ## Internals
 

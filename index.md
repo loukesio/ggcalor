@@ -169,33 +169,50 @@ ggcalor(m, cell_size = 2.6, cell_gap = 0.25, border = NA, labels = "rows") +
 ![Oncoprint of RAS/RAF/MEK/JNK pathway
 alterations](reference/figures/readme-oncoprint.png)
 
-### Rings
+### Flat or round
 
-[`calor_radial()`](https://loukesio.github.io/ggcalor/reference/calor_radial.md)
-bends the grid into a ring. Here each spoke is one year of sunspot
-counts since 1749 and each ring is one month, from January inside to
-December outside. The Sun’s 11-year cycle shows as two dozen bursts of
-dark spokes around the circle, and the weak cycles of the early 1800s
-(the Dalton minimum) as a pale arc.
+The same grid can lie flat or bend into a ring. `global_temp` holds
+NASA’s global temperature anomaly for every month from 1880 to 2025, as
+a 12-by-146 matrix of months by years. Laid flat, the warming reads left
+to right:
 
 ``` r
 
-sun <- window(sunspot.month, start = c(1749, 1), end = c(2023, 12))
-sun <- matrix(sun, nrow = 12, dimnames = list(month.abb, 1749:2023))
+anomaly <- scale_fill_distiller(palette = "RdBu", limits = c(-1.5, 1.5), breaks = c(-1, 0, 1),
+                                labels = c("−1 °C", "0", "+1 °C"))
 
-ggcalor(sun, cell_size = 2.2, border = NA) +
-  calor_radial(inner.radius = 0.45, gap = 0.25, label_size = 8) +
-  # Label every 25th year and every third month.
-  scale_x_discrete(labels = function(x) ifelse(as.integer(x) %% 25 == 0, x, "")) +
-  scale_y_discrete(labels = function(x) ifelse(x %in% c("Jan", "Apr", "Jul", "Oct"), x, "")) +
-  scale_fill_viridis_c(option = "inferno", direction = -1) +
-  labs(title = "The Sun breathes in 11-year cycles",
-       subtitle = "Monthly mean sunspot number, 1749–2023",
-       caption = "Data: datasets::sunspot.month (WDC-SILSO)", fill = "sunspots")
+ggcalor(global_temp, cell_size = 2.2, border = NA) +
+  calor_labels(every = c(rows = 3, cols = 20)) +
+  anomaly +
+  labs(title = "Every month of the last decade was warmer than any before 1980",
+       subtitle = "Global temperature anomaly by month, against the 1951–1980 average",
+       caption = "Data: NASA GISTEMP v4", fill = NULL)
 ```
 
-![Ring of monthly sunspot numbers from 1749 to
-2023](reference/figures/readme-ring.png)
+![Global monthly temperature anomalies from 1880 to 2025, as a flat
+heatmap](reference/figures/readme-temp-flat.png)
+
+Add
+[`calor_radial()`](https://loukesio.github.io/ggcalor/reference/calor_radial.md)
+and the years run clockwise around a ring, with the months from January
+(outside) to December (inside):
+
+``` r
+
+ggcalor(global_temp, cell_size = 2.6, border = NA) +
+  calor_radial(inner.radius = 0.4, gap = 0.25, label_size = 8) +
+  calor_labels(every = c(rows = 3, cols = 20)) +
+  anomaly +
+  labs(title = "A planet running a fever",
+       subtitle = "Global temperature anomaly by month, 1880–2025",
+       caption = "Data: NASA GISTEMP v4", fill = "against the 1951–1980 average")
+```
+
+![Global monthly temperature anomalies from 1880 to 2025, as a
+ring](reference/figures/readme-ring.png)
+
+`calor_labels(every = )` thins long runs of names: here every third
+month and every twentieth year.
 
 ### Surfaces and waffles
 
@@ -243,6 +260,5 @@ aims for ComplexHeatmap’s layouts with ggplot2’s interface.
 `measles` comes from Project Tycho (van Panhuis et al. 2013) and
 `luad_alterations` from TCGA via cBioPortal; both are in the form
 ComplexHeatmap ships them. `dune` is from vegan and `penguins` from
-palmerpenguins. `sunspot.month`, `volcano`, `mtcars` and `AirPassengers`
-ship with R; the sunspot numbers come from WDC-SILSO, Royal Observatory
-of Belgium.
+palmerpenguins. `global_temp` is NASA’s GISTEMP v4 (Lenssen et
+al. 2019). `volcano`, `mtcars` and `AirPassengers` ship with R.

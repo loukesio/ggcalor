@@ -15,7 +15,8 @@ calor_labels(
   colour = NULL,
   face = NULL,
   family = NULL,
-  angle = NULL
+  angle = NULL,
+  every = NULL
 )
 ```
 
@@ -51,6 +52,12 @@ calor_labels(
 
   Angle of column names in degrees; row names stay horizontal.
 
+- every:
+
+  Show only every n-th name, counted from the first in the final order:
+  one number for both axes, or a named vector such as
+  `c(rows = 3, cols = 20)`. Useful for long runs of years or months.
+
 ## Value
 
 An object to add to a
@@ -62,4 +69,6 @@ plot with `+`.
 ``` r
 m <- matrix(rnorm(80), 10, 8, dimnames = list(paste0("g", 1:10), paste0("s", 1:8)))
 ggcalor(m) + calor_labels(rows = "right", cols = "bottom", angle = 45, face = "italic")
+
+ggcalor(global_temp, cell_size = 2) + calor_labels(every = c(rows = 3, cols = 20))
 ```

@@ -262,48 +262,53 @@ in the middle:
 ``` r
 
 ggcalor(t(air)[12:1, ], cell_size = 4, cell_gap = 0.1, border = NA) +
-  calor_radial(inner.radius = 0.3, gap = 0.35, legend = "outside", label_size = 8) +
+  calor_radial(inner.radius = 0.3, gap = 0.35, legend = "right", label_size = 8) +
   scale_fill_distiller(palette = "Blues", direction = 1) +
   labs(fill = "passengers\n(thousands)")
 ```
 
 ![](gallery_files/figure-html/calendar-ring-1.png)
 
-## A ring of cycles
+## Flat or round
 
-`sunspot.month` holds the mean number of sunspots in every month since
-1749. As a 12-by-275 matrix, months by years, it is a grid like any
-other, and
-[`calor_radial()`](https://loukesio.github.io/ggcalor/reference/calor_radial.md)
-bends it into a ring: each spoke is a year, each ring a month. The
-11-year solar cycle appears as regular bursts of dark spokes. With this
-many years, the labels are thinned through ordinary
-[`scale_x_discrete()`](https://ggplot2.tidyverse.org/reference/scale_discrete.html)
-and
-[`scale_y_discrete()`](https://ggplot2.tidyverse.org/reference/scale_discrete.html)
-calls.
+`global_temp` holds NASA’s global temperature anomaly for every month
+from 1880 to 2025, as a 12-by-146 matrix of months by years. With this
+many columns, `calor_labels(every = )` keeps every twentieth year and
+every third month. A diverging palette with symmetric `limits` puts the
+1951–1980 average at white.
 
 ``` r
 
-sun <- window(sunspot.month, start = c(1749, 1), end = c(2023, 12))
-sun <- matrix(sun, nrow = 12, dimnames = list(month.abb, 1749:2023))
+anomaly <- scale_fill_distiller(palette = "RdBu", limits = c(-1.5, 1.5), breaks = c(-1, 0, 1),
+                                labels = c("−1 °C", "0", "+1 °C"))
 
-ggcalor(sun, cell_size = 2.2, border = NA) +
-  calor_radial(inner.radius = 0.45, gap = 0.25, label_size = 8) +
-  # Label every 25th year and every third month.
-  scale_x_discrete(labels = function(x) ifelse(as.integer(x) %% 25 == 0, x, "")) +
-  scale_y_discrete(labels = function(x) ifelse(x %in% c("Jan", "Apr", "Jul", "Oct"), x, "")) +
-  scale_fill_viridis_c(option = "inferno", direction = -1) +
-  labs(title = "The Sun breathes in 11-year cycles",
-       subtitle = "Monthly mean sunspot number, 1749–2023",
-       caption = "Data: datasets::sunspot.month (WDC-SILSO)", fill = "sunspots")
-#> Scale for x is already present.
-#> Adding another scale for x, which will replace the existing scale.
-#> Scale for y is already present.
-#> Adding another scale for y, which will replace the existing scale.
+ggcalor(global_temp, cell_size = 2.2, border = NA) +
+  calor_labels(every = c(rows = 3, cols = 20)) +
+  anomaly +
+  labs(title = "Every month of the last decade was warmer than any before 1980",
+       subtitle = "Global temperature anomaly by month, against the 1951–1980 average",
+       caption = "Data: NASA GISTEMP v4", fill = NULL)
 ```
 
-![](gallery_files/figure-html/ring-1.png)
+![](gallery_files/figure-html/temp-flat-1.png)
+
+Adding
+[`calor_radial()`](https://loukesio.github.io/ggcalor/reference/calor_radial.md)
+bends the same plot into a ring. The legend becomes a slim bar below the
+ring; `legend = "right"` or `"inside"` moves it.
+
+``` r
+
+ggcalor(global_temp, cell_size = 2.6, border = NA) +
+  calor_radial(inner.radius = 0.4, gap = 0.25, label_size = 8) +
+  calor_labels(every = c(rows = 3, cols = 20)) +
+  anomaly +
+  labs(title = "A planet running a fever",
+       subtitle = "Global temperature anomaly by month, 1880–2025",
+       caption = "Data: NASA GISTEMP v4", fill = "against the 1951–1980 average")
+```
+
+![](gallery_files/figure-html/temp-ring-1.png)
 
 ## Smooth surfaces
 
