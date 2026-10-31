@@ -269,29 +269,38 @@ ggcalor(t(air)[12:1, ], cell_size = 4, cell_gap = 0.1, border = NA) +
 
 ![](gallery_files/figure-html/calendar-ring-1.png)
 
-## Ring of categories
+## A ring of cycles
 
-Long data goes straight in through `rows`, `cols` and `value`, one row
-per cell. `dvs_members` lists the months in which each of 130 countries
-gained members of a society, with their dominant trait.
+`sunspot.month` holds the mean number of sunspots in every month since
+1749. As a 12-by-275 matrix, months by years, it is a grid like any
+other, and
 [`calor_radial()`](https://loukesio.github.io/ggcalor/reference/calor_radial.md)
-places the country names around the ring, the months in the gap, and the
-legend in the hole. The country names are real; the memberships are
-simulated.
+bends it into a ring: each spoke is a year, each ring a month. The
+11-year solar cycle appears as regular bursts of dark spokes. With this
+many years, the labels are thinned through ordinary
+[`scale_x_discrete()`](https://ggplot2.tidyverse.org/reference/scale_discrete.html)
+and
+[`scale_y_discrete()`](https://ggplot2.tidyverse.org/reference/scale_discrete.html)
+calls.
 
 ``` r
 
-ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
-        cell_size = 3.6, border = "white", na_fill = "#EFECE6") +
-  calor_radial(inner.radius = 0.42, gap = 0.2, label_size = 8) +
-  scale_fill_manual(values = c(Data = "#F3A712", Visualization = "#E4572E", Society = "#2E86AB"),
-                    breaks = c("Data", "Visualization", "Society"), na.value = "#EFECE6") +
-  labs(title = "A year of new members, country by country",
-       subtitle = "Months in which each country gained members, by their main interest",
-       caption = "Simulated memberships; real country names", fill = NULL) +
-  # The country names reach past the ring; keep them clear of the titles.
-  theme(plot.subtitle = element_text(margin = margin(b = 30)),
-        plot.caption = element_text(margin = margin(t = 30)))
+sun <- window(sunspot.month, start = c(1749, 1), end = c(2023, 12))
+sun <- matrix(sun, nrow = 12, dimnames = list(month.abb, 1749:2023))
+
+ggcalor(sun, cell_size = 2.2, border = NA) +
+  calor_radial(inner.radius = 0.45, gap = 0.25, label_size = 8) +
+  # Label every 25th year and every third month.
+  scale_x_discrete(labels = function(x) ifelse(as.integer(x) %% 25 == 0, x, "")) +
+  scale_y_discrete(labels = function(x) ifelse(x %in% c("Jan", "Apr", "Jul", "Oct"), x, "")) +
+  scale_fill_viridis_c(option = "inferno", direction = -1) +
+  labs(title = "The Sun breathes in 11-year cycles",
+       subtitle = "Monthly mean sunspot number, 1749–2023",
+       caption = "Data: datasets::sunspot.month (WDC-SILSO)", fill = "sunspots")
+#> Scale for x is already present.
+#> Adding another scale for x, which will replace the existing scale.
+#> Scale for y is already present.
+#> Adding another scale for y, which will replace the existing scale.
 ```
 
 ![](gallery_files/figure-html/ring-1.png)
