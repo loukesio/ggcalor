@@ -34,7 +34,8 @@ test_that("radial coordinates render without tracks and warn with them", {
   expect_warning(ggplotGrob(p + calor_dendro(rows = TRUE)), "non-linear")
   r <- ggcalor(m) + calor_radial(inner.radius = 0.4)
   expect_false(r@coordinates$is_linear())
-  expect_equal(r@theme$legend.position, "inside")
+  expect_equal(r@theme$legend.position, "bottom")
+  expect_equal((ggcalor(m) + calor_radial(legend = "inside"))@theme$legend.position, "inside")
   expect_s3_class(ggplotGrob(r), "gtable")
   # later theme() calls still win, and ring labels add to the natural size
   r2 <- r + theme(legend.position = "right")
@@ -79,4 +80,12 @@ test_that("smooth surfaces interpolate, blur and follow the order", {
   b <- ggplot_build(p2)
   expect_equal(b@plot@scales$get_scales("y")$labels, rev(calor_order_of(p2)$rows))
   expect_error(ggcalor(matrix("a", 2, 2), smooth = "raster"), "numeric")
+})
+
+test_that("calor_labels(every = ) thins each axis on its own", {
+  p <- ggcalor(global_temp[, 1:40]) + calor_labels(every = c(rows = 3, cols = 20))
+  g <- ggplot2::ggplot_build(p)
+  pp <- g@layout$panel_params[[1]]
+  expect_equal(setdiff(pp$x$get_labels(), ""), c("1880", "1900"))
+  expect_equal(setdiff(pp$y$get_labels(), ""), c("Oct", "Jul", "Apr", "Jan"))
 })

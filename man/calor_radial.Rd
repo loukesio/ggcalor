@@ -8,7 +8,7 @@ calor_radial(
   inner.radius = 0.4,
   gap = 0.12,
   label_size = 6,
-  legend = c("inside", "outside"),
+  legend = c("bottom", "right", "inside"),
   ...
 )
 }
@@ -19,18 +19,18 @@ calor_radial(
 
 \item{label_size}{Column label size in points.}
 
-\item{legend}{\code{"inside"} (in the hole) or \code{"outside"} (ggplot2's default
-placement).}
+\item{legend}{Where the legend goes: \code{"bottom"} (a slim horizontal bar
+below the ring), \code{"right"}, or \code{"inside"} (in the hole).}
 
 \item{...}{Passed to \code{\link[ggplot2:coord_radial]{ggplot2::coord_radial()}}.}
 }
 \value{
-A list of components to add to a \code{\link[=ggcalor]{ggcalor()}} plot with \code{+}.
+An object to add to a \code{\link[=ggcalor]{ggcalor()}} plot with \code{+}.
 }
 \description{
 Wraps \code{\link[ggplot2:coord_radial]{ggplot2::coord_radial()}} with the settings a ring heatmap needs:
 column labels radiate outward and stay readable, row labels sit in a small
-gap of the ring, the legend goes in the hole, and the grid is hidden.
+gap of the ring, the legend sits below as a slim bar, and the grid is hidden.
 Anything added afterwards with \code{theme()} or \code{guides()} still wins.
 }
 \details{
@@ -39,5 +39,6 @@ Dendrograms and annotation tracks are not drawn in a ring.
 \examples{
 ring <- matrix(sample(c("a", "b", NA), 12 * 40, TRUE), 12, 40,
                dimnames = list(month.abb, paste0("country ", 1:40)))
-ggcalor(ring, cell_size = 3, border = "white", na_fill = "#EFECE6") + calor_radial()
+ggcalor(ring, cell_size = 3, na_fill = "#EFECE6") + calor_radial()
+ggcalor(global_temp[, 1:60], cell_size = 3) + calor_radial(legend = "right")
 }

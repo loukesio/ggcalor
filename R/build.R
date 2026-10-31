@@ -140,6 +140,7 @@ S7::method(ggplot_build, class_calor) <- function(plot, ...) {
   }
 
   base <- apply_label_spec(base, st)
+  base <- thin_labels(base, st, lr, lc)
   if (!is.null(st$text)) {
     tx <- st$text
     base <- base + rlang::inject(geom_text(aes(label = .data$.label), size = tx$size / .pt,

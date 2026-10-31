@@ -52,7 +52,7 @@ p <- ggcalor(m, cell_size = 2.6, cell_gap = 0.25, border = NA, labels = "rows") 
   theme(legend.position = "bottom")
 fig(p, "oncoprint")
 
-# Beyond heatmaps: surface, ring, waffle
+# Beyond heatmaps: surface, flat and round temperatures, waffle
 v <- t(volcano[seq(87, 1, -2), seq(1, 61, 2)])
 dimnames(v) <- list(seq_len(nrow(v)), seq_len(ncol(v)))
 p <- ggcalor(v, cell_size = 2.4, smooth = "contour", smooth_sigma = 1, labels = "none") +
@@ -61,17 +61,23 @@ p <- ggcalor(v, cell_size = 2.4, smooth = "contour", smooth_sigma = 1, labels = 
        caption = "Data: datasets::volcano", fill = "height (m)")
 fig(p, "volcano")
 
-sun <- window(sunspot.month, start = c(1749, 1), end = c(2023, 12))
-sun <- matrix(sun, nrow = 12, dimnames = list(month.abb, 1749:2023))
-p <- ggcalor(sun, cell_size = 2.2, border = NA) +
-  calor_radial(inner.radius = 0.45, gap = 0.25, label_size = 8) +
-  # Label every 25th year and every third month.
-  scale_x_discrete(labels = function(x) ifelse(as.integer(x) %% 25 == 0, x, "")) +
-  scale_y_discrete(labels = function(x) ifelse(x %in% c("Jan", "Apr", "Jul", "Oct"), x, "")) +
-  scale_fill_viridis_c(option = "inferno", direction = -1) +
-  labs(title = "The Sun breathes in 11-year cycles",
-       subtitle = "Monthly mean sunspot number, 1749–2023",
-       caption = "Data: datasets::sunspot.month (WDC-SILSO)", fill = "sunspots")
+anomaly <- scale_fill_distiller(palette = "RdBu", limits = c(-1.5, 1.5), breaks = c(-1, 0, 1),
+                                labels = c("−1 °C", "0", "+1 °C"))
+p <- ggcalor(global_temp, cell_size = 2.2, border = NA) +
+  calor_labels(every = c(rows = 3, cols = 20)) +
+  anomaly +
+  labs(title = "Every month of the last decade was warmer than any before 1980",
+       subtitle = "Global temperature anomaly by month, against the 1951–1980 average",
+       caption = "Data: NASA GISTEMP v4", fill = NULL)
+fig(p, "temp-flat")
+
+p <- ggcalor(global_temp, cell_size = 2.6, border = NA) +
+  calor_radial(inner.radius = 0.4, gap = 0.25, label_size = 8) +
+  calor_labels(every = c(rows = 3, cols = 20)) +
+  anomaly +
+  labs(title = "A planet running a fever",
+       subtitle = "Global temperature anomaly by month, 1880–2025",
+       caption = "Data: NASA GISTEMP v4", fill = "against the 1951–1980 average")
 fig(p, "ring")
 
 penguins <- as.data.frame(table(island = palmerpenguins::penguins$island,
