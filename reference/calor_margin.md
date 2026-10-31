@@ -12,7 +12,7 @@ calor_margin(
   left = NULL,
   right = NULL,
   size = 10,
-  fill = "grey45",
+  fill = "#455D7A",
   data = c("raw", "display")
 )
 ```

@@ -1,7 +1,8 @@
 # Discrete palette for annotation tracks
 
-A colour-blind-friendly qualitative palette (Okabe-Ito first, then a
-muted extension), used for categorical annotation tracks.
+A qualitative palette of twelve saturated, clearly separated colours,
+used for categorical annotation tracks, cluster highlights and waffle
+charts.
 
 ## Usage
 

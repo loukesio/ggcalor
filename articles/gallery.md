@@ -7,6 +7,8 @@ code, swap in your own matrix, and adjust.
 ``` r
 
 library(ggcalor)
+# Optional: the fonts used on this page (any installed font works).
+options(ggcalor.family = "Fira Sans", ggcalor.mono = "Roboto Mono")
 ```
 
 ## Clustered heatmap with annotations
@@ -24,21 +26,24 @@ sites <- data.frame(management = dune.env$Management, moisture = dune.env$Moistu
 levels(sites$management) <- c("biological", "hobby", "nature reserve", "standard")
 
 ggcalor(t(dune), cell_size = 4.2) +
-  calor_dendro(rows = TRUE, cols = TRUE, k = 3, highlight = TRUE) +
+  calor_dendro(rows = TRUE, cols = TRUE) +
   calor_split(cols = 3) +
   calor_anno(top = sites) +
-  calor_margin(right = "mean") +
-  scale_fill_distiller(palette = "Greens", direction = 1) +
-  labs(fill = "cover")
+  calor_margin(right = "mean", fill = "#3B8F5C") +
+  scale_fill_distiller(palette = "YlGn", direction = 1) +
+  labs(title = "Wet meadows grow their own plant community",
+       subtitle = "Cover of 30 plant species in 20 Dutch dune meadows",
+       caption = "Data: vegan::dune", fill = "cover")
 ```
 
 ![](gallery_files/figure-html/dune-1.png)
 
 [`calor_dendro()`](https://loukesio.github.io/ggcalor/reference/calor_dendro.md)
-clusters both axes and draws the trees. With `k = 3` it cuts each tree
-into three groups, and `highlight = TRUE` shades them.
-`calor_split(cols = 3)` then separates the three column groups with a
-gap; cells stay square and each slice keeps its own subtree.
+clusters both axes and draws the trees. `calor_split(cols = 3)` cuts the
+column tree into three groups and separates them with a gap; cells stay
+square and each slice keeps its own subtree. The trees stay in ink here
+so that colour is left for the tracks; to colour the groups instead, see
+`k` and `highlight` in the recipe on scaled columns.
 
 [`calor_anno()`](https://loukesio.github.io/ggcalor/reference/calor_anno.md)
 takes a data frame whose row names match the columns. Each column
@@ -73,7 +78,7 @@ m <- t(dune)
 species <- data.frame(species = rownames(m), mean = rowMeans(m),
                       se = apply(m, 1, sd) / sqrt(ncol(m)))
 bars <- ggplot(species, aes(mean, species)) +
-  geom_col(fill = "#74A9CF", width = 0.7) +
+  geom_col(fill = "#3B8F5C", width = 0.7) +
   geom_errorbar(aes(xmin = mean - se, xmax = mean + se), width = 0.3, linewidth = 0.3) +
   labs(x = "mean cover \u00b1 se") +
   theme_minimal(base_size = 8)
@@ -81,15 +86,15 @@ bars <- ggplot(species, aes(mean, species)) +
 present <- data.frame(site = rep(colnames(m), each = nrow(m)), cover = as.vector(m))
 present <- present[present$cover > 0, ]
 boxes <- ggplot(present, aes(site, cover)) +
-  geom_boxplot(width = 0.6, fill = "grey90", outlier.size = 0.4, linewidth = 0.3) +
-  theme_classic(base_size = 8)
+  geom_boxplot(width = 0.6, fill = "#D7EBDC", outlier.size = 0.4, linewidth = 0.3) +
+  theme_minimal(base_size = 8)
 
 ggcalor(m, cell_size = 4.2) +
   calor_dendro(rows = TRUE, cols = TRUE) +
   calor_split(cols = 3) +
   calor_panel(bars, side = "right", size = 28) +
   calor_panel(boxes, side = "top", size = 18) +
-  scale_fill_distiller(palette = "Greens", direction = 1) +
+  scale_fill_distiller(palette = "YlGn", direction = 1) +
   labs(fill = "cover")
 ```
 
@@ -118,14 +123,14 @@ library(patchwork)
 pca <- prcomp(dune)
 sites_pca <- data.frame(pca$x[, 1:2], moisture = dune.env$Moisture)
 scatter <- ggplot(sites_pca, aes(PC1, PC2, colour = moisture)) +
-  geom_point(size = 2) +
+  geom_point(size = 2.5) +
   scale_colour_brewer(palette = "Blues") +
-  theme_bw(base_size = 9)
+  theme_minimal(base_size = 9, base_family = "Fira Sans")
 
 heat <- ggcalor(t(dune), cell_size = 3.2) +
   calor_dendro(rows = TRUE, cols = TRUE, k = 3) +
   calor_anno(top = sites["moisture"]) +
-  scale_fill_distiller(palette = "Greens", direction = 1) +
+  scale_fill_distiller(palette = "YlGn", direction = 1) +
   labs(fill = "cover")
 
 heat + scatter + plot_layout(widths = c(NA, 1)) + plot_annotation(tag_levels = "A")
@@ -151,7 +156,9 @@ ggcalor(as.matrix(mtcars[, vars]), cell_size = 4, scale = "column") +
   calor_anno(left = list(transmission = transmission), type = "glyph") +
   calor_bracket(cols = group, side = "bottom", angle = 90, size = 14) +
   calor_legend("histogram") +
-  labs(fill = "z-score")
+  labs(title = "Light, frugal cars stand apart from the rest",
+       subtitle = "Each specification as a z-score across 32 cars",
+       caption = "Data: datasets::mtcars", fill = "z-score")
 ```
 
 ![](gallery_files/figure-html/cars-1.png)
@@ -173,8 +180,8 @@ least one of them.
 
 ``` r
 
-alt_colours <- c(mutation = "#2E7D32", amplification = "#C62828",
-                 `deep deletion` = "#1565C0", `mutation + amplification` = "#8E24AA")
+alt_colours <- c(mutation = "#3B8F5C", amplification = "#E4572E",
+                 `deep deletion` = "#2E86AB", `mutation + amplification` = "#8E5BA8")
 
 n_altered <- rowSums(!is.na(luad_alterations))
 m <- luad_alterations[order(n_altered, decreasing = TRUE)[1:10], ]
@@ -183,8 +190,10 @@ m <- m[, colSums(!is.na(m)) > 0]
 ggcalor(m, cell_size = 2.6, cell_gap = 0.25, border = NA, labels = "rows") +
   calor_order(rows = "sum", cols = "memo") +
   calor_margin(right = "sum", top = "sum", size = 10) +
-  scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "grey93") +
-  labs(fill = NULL) +
+  scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "#F1EEE8") +
+  labs(title = "KRAS and BRAF are rarely altered in the same tumour",
+       subtitle = "RAS/RAF/MEK/JNK pathway alterations in 106 lung adenocarcinomas",
+       caption = "Data: TCGA via cBioPortal", fill = NULL) +
   theme(legend.position = "bottom")
 ```
 
@@ -215,7 +224,9 @@ cm <- cm[o, o]
 ggcalor(cm, cell_size = 8, mask = upper.tri(cm), cell_gap = 0.08, border = NA, na_fill = NA) +
   calor_text(digits = 2, size = 5.5) +
   scale_fill_distiller(palette = "RdBu", limits = c(-1, 1)) +
-  labs(fill = "r")
+  labs(title = "Heavier cars go fewer miles per gallon",
+       subtitle = "Correlations between the specifications of 32 cars",
+       caption = "Data: datasets::mtcars", fill = "r")
 ```
 
 ![](gallery_files/figure-html/correlation-1.png)
@@ -235,7 +246,9 @@ air <- matrix(AirPassengers, 12, dimnames = list(month.abb, 1949:1960))
 ggcalor(air, cell_size = 7, cell_gap = 0.1, border = NA) +
   calor_text(digits = 0, size = 5) +
   scale_fill_distiller(palette = "Blues", direction = 1) +
-  labs(fill = "passengers\n(thousands)")
+  labs(title = "Air travel grew every year and peaked every summer",
+       subtitle = "Monthly airline passengers, 1949–1960",
+       caption = "Data: datasets::AirPassengers", fill = "passengers\n(thousands)")
 ```
 
 ![](gallery_files/figure-html/calendar-1.png)
@@ -269,11 +282,16 @@ simulated.
 ``` r
 
 ggcalor(dvs_members, rows = "month", cols = "country", value = "trait",
-        cell_size = 2.4, border = "grey85", na_fill = "white") +
-  calor_radial(inner.radius = 0.45) +
-  scale_fill_manual(values = c(Data = "#f2c200", Visualization = "#e03b3b",
-                               Society = "#4a7bd0"), na.translate = FALSE) +
-  labs(fill = NULL)
+        cell_size = 3.6, border = "white", na_fill = "#EFECE6") +
+  calor_radial(inner.radius = 0.42, gap = 0.2, label_size = 8) +
+  scale_fill_manual(values = c(Data = "#F3A712", Visualization = "#E4572E", Society = "#2E86AB"),
+                    breaks = c("Data", "Visualization", "Society"), na.value = "#EFECE6") +
+  labs(title = "A year of new members, country by country",
+       subtitle = "Months in which each country gained members, by their main interest",
+       caption = "Simulated memberships; real country names", fill = NULL) +
+  # The country names reach past the ring; keep them clear of the titles.
+  theme(plot.subtitle = element_text(margin = margin(b = 30)),
+        plot.caption = element_text(margin = margin(t = 30)))
 ```
 
 ![](gallery_files/figure-html/ring-1.png)
@@ -293,7 +311,8 @@ dimnames(v) <- list(seq_len(nrow(v)), seq_len(ncol(v)))
 
 ggcalor(v, cell_size = 2.4, smooth = "contour", smooth_sigma = 1, labels = "none") +
   scale_fill_viridis_d(option = "mako") +
-  labs(fill = "height (m)")
+  labs(title = "Maunga Whau rises 100 m above its plain",
+       caption = "Data: datasets::volcano", fill = "height (m)")
 ```
 
 ![](gallery_files/figure-html/surface-1.png)
@@ -328,7 +347,7 @@ ggcalor(hx, cell_shape = "hex", cell_size = 5, cell_gap = 0.06, labels = "none")
 
 ## Waffle charts
 
-[`ggwaffle()`](https://loukesio.github.io/ggcalor/reference/ggwaffle.md)
+[`calor_waffle()`](https://loukesio.github.io/ggcalor/reference/calor_waffle.md)
 draws counts as a grid of unit cells, one waffle per group. Here each
 square is 1% of the penguins sampled on each island.
 
@@ -336,7 +355,9 @@ square is 1% of the penguins sampled on each island.
 
 penguins <- as.data.frame(table(island = palmerpenguins::penguins$island,
                                 species = palmerpenguins::penguins$species))
-ggwaffle(penguins, "species", "Freq", by = "island", cell_size = 2.6)
+calor_waffle(penguins, "species", "Freq", by = "island", cell_size = 3.2) +
+  labs(title = "Gentoo penguins live only on Biscoe",
+       subtitle = "Share of each species among the penguins sampled on three islands")
 ```
 
 ![](gallery_files/figure-html/waffle-1.png)

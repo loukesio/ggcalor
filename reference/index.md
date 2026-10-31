@@ -64,7 +64,7 @@
 
 - [`calor_radial()`](https://loukesio.github.io/ggcalor/reference/calor_radial.md)
   : Lay the grid out as a ring
-- [`ggwaffle()`](https://loukesio.github.io/ggcalor/reference/ggwaffle.md)
+- [`calor_waffle()`](https://loukesio.github.io/ggcalor/reference/calor_waffle.md)
   : Waffle chart: a unit grid of counts
 
 ## Data
