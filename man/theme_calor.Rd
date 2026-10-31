@@ -4,7 +4,7 @@
 \alias{theme_calor}
 \title{A minimal theme for cell grids}
 \usage{
-theme_calor(base_size = 10, base_family = "")
+theme_calor(base_size = 10, base_family = calor_family())
 }
 \arguments{
 \item{base_size}{Base font size.}
@@ -15,5 +15,13 @@ theme_calor(base_size = 10, base_family = "")
 A theme object.
 }
 \description{
-No grid, no axis lines, tick-less labels, legend on the right.
+No grid, no axis lines, tick-less labels, legend on the right. Titles are
+bold and aligned with the left edge of the whole plot, the subtitle is
+quieter, and the caption (for a data source) is set in a monospaced font.
+}
+\details{
+The font family defaults to \code{getOption("ggcalor.family")}, so
+\code{options(ggcalor.family = "Fira Sans")} sets it for every plot, including
+the trees, tracks and legends; \code{options(ggcalor.mono = )} sets the caption
+font.
 }

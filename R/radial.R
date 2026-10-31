@@ -17,14 +17,14 @@
 #' @examples
 #' ring <- matrix(sample(c("a", "b", NA), 12 * 40, TRUE), 12, 40,
 #'                dimnames = list(month.abb, paste0("country ", 1:40)))
-#' ggcalor(ring, cell_size = 3, border = "grey85", na_fill = "white") + calor_radial()
+#' ggcalor(ring, cell_size = 3, border = "white", na_fill = "#EFECE6") + calor_radial()
 #' @export
 calor_radial <- function(inner.radius = 0.4, gap = 0.12, label_size = 6,
                          legend = c("inside", "outside"), ...) {
   legend <- rlang::arg_match(legend)
   th <- theme(
-    axis.text.theta = element_text(size = label_size, colour = "grey30"),
-    axis.text.r = element_text(size = label_size - 1, colour = "grey50"),
+    axis.text.theta = element_text(size = label_size, colour = calor_ink),
+    axis.text.r = element_text(size = label_size - 1, colour = "#5A5A5A"),
     axis.ticks = element_blank(), panel.grid = element_blank(),
     legend.key.size = grid::unit(3, "mm"), legend.text = element_text(size = 7),
     legend.title = element_text(size = 8)

@@ -67,7 +67,7 @@ apply_histogram_legend <- function(main, st) {
     scale_x_continuous(breaks = br, labels = labels, limits = lim, expand = c(0, 0)) +
     scale_y_continuous(limits = c(-strip_h, max(h$counts) * 1.04), breaks = count_breaks,
                        expand = c(0, 0), name = "count") +
-    theme_void() +
+    theme_void(base_family = calor_family()) +
     theme(axis.text.x = txt, axis.text.x.bottom = element_text(margin = margin(t = 1)),
           axis.text.y = txt, axis.text.y.left = element_text(hjust = 1, margin = margin(r = 1)),
           axis.title.y = element_text(size = txt$size, colour = txt$colour, angle = 90, margin = margin(r = 2)),

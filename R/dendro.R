@@ -25,7 +25,7 @@
 #' @export
 calor_dendro <- function(rows = TRUE, cols = FALSE, method = "complete",
                          dist = "euclidean", k = NULL, highlight = FALSE,
-                         size = 12, colour = "grey30", linewidth = 0.4,
+                         size = 12, colour = "#2B2B2B", linewidth = 0.4,
                          show_tree = TRUE) {
   structure(list(rows = rows, cols = cols, method = method, dist = dist, k = k,
                  highlight = highlight, size = size, colour = colour,
@@ -113,7 +113,7 @@ dendro_plot <- function(lay, spec, side) {
   if (!coloured) {
     seg_aes <- if (flip) aes(x = .data$y, xend = .data$yend, y = .data$x, yend = .data$xend)
                else aes(x = .data$x, xend = .data$xend, y = .data$y, yend = .data$yend)
-    p <- p + geom_segment(seg_aes, colour = spec$colour %||% "grey30", linewidth = spec$linewidth %||% 0.4, lineend = "square")
+    p <- p + geom_segment(seg_aes, colour = spec$colour %||% calor_ink, linewidth = spec$linewidth %||% 0.4, lineend = "square")
   } else {
     seg_aes <- if (flip) aes(x = .data$y, xend = .data$yend, y = .data$x, yend = .data$xend, colour = .data$cluster)
                else aes(x = .data$x, xend = .data$xend, y = .data$y, yend = .data$yend, colour = .data$cluster)
@@ -121,7 +121,7 @@ dendro_plot <- function(lay, spec, side) {
       scale_colour_manual(values = cluster_palette(seg$cluster), aesthetics = c("colour", "fill"))
   }
   leaf_scale <- function(f) f(limits = c(0.5, L + 0.5), expand = c(0, 0))
-  p <- p + theme_void() + theme(plot.margin = margin(0, 0, 0, 0))
+  p <- p + theme_void(base_family = calor_family()) + theme(plot.margin = margin(0, 0, 0, 0))
   if (flip) {
     p + scale_x_reverse(limits = c(ymax, 0), expand = c(0, 0)) + leaf_scale(scale_y_continuous) +
       theme(panel.widths = grid::unit(spec$size, "mm"), panel.heights = grid::unit(L * lay$cell_mm, "mm"))
@@ -133,10 +133,10 @@ dendro_plot <- function(lay, spec, side) {
 
 cluster_palette <- function(cluster) {
   lv <- sort(unique(cluster))
-  pal <- c("#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666")
+  pal <- calor_pal[1:8]
   pal <- rep_len(pal, length(lv))
   names(pal) <- lv
-  pal["trunk"] <- "grey40"
+  pal["trunk"] <- calor_ink
   pal
 }
 

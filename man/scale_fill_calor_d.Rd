@@ -10,6 +10,6 @@ scale_fill_calor_d(...)
 \item{...}{Passed to \code{\link[ggplot2:discrete_scale]{ggplot2::discrete_scale()}}.}
 }
 \description{
-A colour-blind-friendly qualitative palette (Okabe-Ito first, then a muted
-extension), used for categorical annotation tracks.
+A qualitative palette of twelve saturated, clearly separated colours, used
+for categorical annotation tracks, cluster highlights and waffle charts.
 }

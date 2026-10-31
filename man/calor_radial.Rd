@@ -39,5 +39,5 @@ Dendrograms and annotation tracks are not drawn in a ring.
 \examples{
 ring <- matrix(sample(c("a", "b", NA), 12 * 40, TRUE), 12, 40,
                dimnames = list(month.abb, paste0("country ", 1:40)))
-ggcalor(ring, cell_size = 3, border = "grey85", na_fill = "white") + calor_radial()
+ggcalor(ring, cell_size = 3, border = "white", na_fill = "#EFECE6") + calor_radial()
 }

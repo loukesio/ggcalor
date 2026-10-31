@@ -98,7 +98,7 @@ as_tracks <- function(x, items, side) {
 #' ggcalor(m) + calor_margin(right = "sum", bottom = "boxplot")
 #' @export
 calor_margin <- function(top = NULL, bottom = NULL, left = NULL, right = NULL,
-                         size = 10, fill = "grey45", data = c("raw", "display")) {
+                         size = 10, fill = "#455D7A", data = c("raw", "display")) {
   data <- rlang::arg_match(data)
   structure(list(top = top, bottom = bottom, left = left, right = right,
                  size = size, fill = fill, data = data), class = "calor_margin")
@@ -163,7 +163,7 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
   pos <- lay$pos
   if (!along_cols) pos <- lay$L + 1 - pos  # rows run top to bottom
   lim <- c(0.5, lay$L + 0.5)
-  th <- theme_void() + theme(plot.margin = margin(0, 0, 0, 0))
+  th <- theme_void(base_family = calor_family()) + theme(plot.margin = margin(0, 0, 0, 0))
   name_theme <- if (along_cols) {
     theme(axis.title.y = element_text(size = 7, angle = 0, hjust = 1, vjust = 0.5, margin = margin(r = 2.5)))
   } else {
@@ -182,7 +182,7 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
       ggplot(df, aes(y = .data$pos, x = .data$v, group = .data$pos))
     }
     p <- p + geom_boxplot(width = 0.62, linewidth = 0.3, outlier.size = 0.3, outlier.alpha = 0.6,
-                          fill = tr$colours %||% "grey88", colour = "grey25", staplewidth = 0.4,
+                          fill = tr$colours %||% "#D6E4EE", colour = calor_ink, staplewidth = 0.4,
                           orientation = if (along_cols) "x" else "y", na.rm = TRUE)
     axis_bits <- value_axis(along_cols, tr$side, integer = FALSE)
   } else {
@@ -214,7 +214,7 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
         calor_qualitative_scale(tr$pal_offset %||% 0)
       }
     } else if (tr$type == "glyph") {
-      col <- tr$colours %||% "grey20"
+      col <- tr$colours %||% calor_ink
       p <- ggplot(df, if (along_cols) aes(x = .data$pos, y = 1) else aes(x = 1, y = .data$pos))
       p <- p + if (is.numeric(df$value)) {
         list(geom_point(aes(size = .data$value), colour = col, na.rm = TRUE, show.legend = tr$show_legend),
@@ -228,7 +228,7 @@ track_plot <- function(tr, lay, cell_mm, interactive = NULL) {
     } else if (tr$type == "bracket") {
       p <- bracket_plot(df, tr, along_cols)
     } else {
-      fill <- tr$colours %||% "grey45"
+      fill <- tr$colours %||% "#455D7A"
       p <- if (along_cols) ggplot(df, aes(x = .data$pos, y = .data$value)) else ggplot(df, aes(y = .data$pos, x = .data$value))
       rng <- range(df$value, na.rm = TRUE)
       if (tr$type == "bar" && rng[1] < 0 && rng[2] > 0) {
@@ -390,7 +390,7 @@ bracket_plot <- function(df, tr, along_cols) {
   text_y <- if (inward) line_y + 0.1 else line_y - 0.1
   hjust <- if (!rotated) 0.5 else if (inward) 0 else 1
   vjust <- if (rotated) 0.5 else if (inward) 0 else 1
-  col <- tr$colours %||% "grey20"
+  col <- tr$colours %||% calor_ink
   if (along_cols) {
     p <- ggplot(runs) +
       geom_segment(aes(x = .data$from, xend = .data$to), y = line_y, yend = line_y, colour = col, linewidth = 0.4) +
@@ -413,14 +413,15 @@ bracket_plot <- function(df, tr, along_cols) {
 
 #' Discrete palette for annotation tracks
 #'
-#' A colour-blind-friendly qualitative palette (Okabe-Ito first, then a muted
-#' extension), used for categorical annotation tracks.
+#' A qualitative palette of twelve saturated, clearly separated colours, used
+#' for categorical annotation tracks, cluster highlights and waffle charts.
 #' @param ... Passed to [ggplot2::discrete_scale()].
 #' @export
 scale_fill_calor_d <- function(...) calor_qualitative_scale(0, ...)
 
-calor_pal <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
-               "#CC79A7", "#999999", "#8C564B", "#17BECF", "#BCBD22", "#7F7F7F")
+calor_pal <- c("#E4572E", "#F3A712", "#3B8F5C", "#8E5BA8", "#2E86AB", "#E07BA1",
+               "#4EC0B9", "#A0673E", "#1B3A57", "#C9B037", "#7A2E3A", "#9DB4C0")
+calor_ink <- "#2B2B2B"
 
 # The qualitative palette starting `offset` colours in, wrapping around.
 calor_qualitative_scale <- function(offset = 0, ...) {

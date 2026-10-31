@@ -11,12 +11,12 @@
 #' @param cell_size,cell_gap,cell_radius Cell geometry, as in [ggcalor()].
 #' @return A `ggplot` object.
 #' @examples
-#' ggwaffle(c(apples = 45, pears = 30, plums = 25), n = 100, rows = 10)
+#' calor_waffle(c(apples = 45, pears = 30, plums = 25), n = 100, rows = 10)
 #' df <- data.frame(region = rep(c("north", "south"), each = 3),
 #'                  crop = rep(c("wheat", "rice", "maize"), 2), tons = c(5, 3, 2, 1, 6, 3))
-#' ggwaffle(df, "crop", "tons", by = "region", n = 50, rows = 10)
+#' calor_waffle(df, "crop", "tons", by = "region", n = 50, rows = 10)
 #' @export
-ggwaffle <- function(data, category = NULL, count = NULL, by = NULL, n = 100, rows = 10,
+calor_waffle <- function(data, category = NULL, count = NULL, by = NULL, n = 100, rows = 10,
                      cell_size = 4, cell_gap = 0.15, cell_radius = 0.3) {
   if (is.data.frame(data)) {
     category <- category %||% names(data)[1]; count <- count %||% names(data)[2]
@@ -41,11 +41,16 @@ ggwaffle <- function(data, category = NULL, count = NULL, by = NULL, n = 100, ro
     scale_y_continuous(limits = c(0.5, rows + 0.5), expand = c(0, 0)) +
     scale_fill_calor_d() +
     labs(fill = NULL, caption = sprintf("1 square = %s%%", format(share, digits = 2))) +
-    theme_void() +
-    theme(panel.widths = grid::unit(rep(ncols * cell_size, nlevels(cells$by)), "mm"),
+    theme_void(base_family = calor_family()) +
+    theme(text = element_text(colour = calor_ink),
+          panel.widths = grid::unit(rep(ncols * cell_size, nlevels(cells$by)), "mm"),
           panel.heights = grid::unit(rows * cell_size, "mm"),
-          panel.spacing = grid::unit(cell_size, "mm"), strip.text = element_text(size = 9, margin = margin(b = 3)),
-          plot.caption = element_text(size = 7, colour = "grey40"), legend.key.size = grid::unit(4, "mm"))
+          panel.spacing = grid::unit(cell_size, "mm"), strip.text = element_text(size = 9, face = "bold", hjust = 0, margin = margin(b = 3)),
+          plot.title = element_text(size = 15, face = "bold", margin = margin(b = 4)),
+          plot.subtitle = element_text(size = 10, colour = "#5A5A5A", margin = margin(b = 12)),
+          plot.caption = element_text(family = calor_family("mono"), size = 7, colour = "#7A7A7A", hjust = 0),
+          plot.title.position = "plot", plot.caption.position = "plot",
+          plot.margin = margin(12, 14, 10, 14), legend.key.size = grid::unit(4, "mm"))
   if (nlevels(cells$by) > 1) p <- p + facet_wrap(vars(.data$by), nrow = 1)
   p
 }

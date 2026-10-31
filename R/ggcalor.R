@@ -181,32 +181,55 @@ ggcalor <- function(data, rows = NULL, cols = NULL, value = NULL,
 
 #' A minimal theme for cell grids
 #'
-#' No grid, no axis lines, tick-less labels, legend on the right.
+#' No grid, no axis lines, tick-less labels, legend on the right. Titles are
+#' bold and aligned with the left edge of the whole plot, the subtitle is
+#' quieter, and the caption (for a data source) is set in a monospaced font.
+#'
+#' The font family defaults to `getOption("ggcalor.family")`, so
+#' `options(ggcalor.family = "Fira Sans")` sets it for every plot, including
+#' the trees, tracks and legends; `options(ggcalor.mono = )` sets the caption
+#' font.
 #' @param base_size Base font size.
 #' @param base_family Base font family.
 #' @return A theme object.
 #' @export
-theme_calor <- function(base_size = 10, base_family = "") {
+theme_calor <- function(base_size = 10, base_family = calor_family()) {
+  ink <- calor_ink
   theme_minimal(base_size = base_size, base_family = base_family) +
     theme(
+      text = element_text(colour = ink),
       panel.grid = element_blank(),
       axis.ticks = element_blank(),
-      axis.text = element_text(size = rel(0.8), colour = "grey20"),
+      axis.text = element_text(size = rel(0.8), colour = ink),
       axis.text.y.left = element_text(hjust = 1, margin = margin(r = 2.5)),
       axis.text.y.right = element_text(hjust = 0, margin = margin(l = 2.5)),
       axis.text.x.top = element_text(angle = 90, hjust = 0, vjust = 0.5, margin = margin(b = 2.5)),
       axis.text.x.bottom = element_text(angle = 90, hjust = 1, vjust = 0.5, margin = margin(t = 2.5)),
       legend.key.size = grid::unit(4, "mm"),
-      legend.title = element_text(size = rel(0.9), colour = "grey10"),
-      legend.text = element_text(size = rel(0.8), colour = "grey20"),
+      legend.title = element_text(size = rel(0.9), face = "bold", colour = ink),
+      legend.text = element_text(size = rel(0.8), colour = ink),
       legend.spacing.y = grid::unit(3, "mm"),
-      strip.text = element_text(size = rel(0.75), colour = "grey45", margin = margin(2, 2, 2, 2)),
+      strip.text = element_text(size = rel(0.8), face = "bold", colour = ink, margin = margin(2, 2, 2, 2)),
       strip.background = element_blank(),
       strip.text.y = element_text(angle = -90),
       strip.placement = "outside",
+      plot.title = element_text(size = rel(1.6), face = "bold", colour = ink, hjust = 0,
+                                margin = margin(b = 4)),
+      plot.subtitle = element_text(size = rel(1.05), colour = "#5A5A5A", hjust = 0,
+                                   lineheight = 1.15, margin = margin(b = 12)),
+      plot.caption = element_text(family = calor_family("mono"), size = rel(0.7), colour = "#7A7A7A",
+                                  hjust = 0, margin = margin(t = 12)),
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
       plot.background = element_rect(fill = "white", colour = NA),
-      plot.margin = margin(5, 5, 5, 5)
+      plot.margin = margin(12, 14, 10, 14)
     )
+}
+
+# Font families for every part of a plot; set with options(ggcalor.family = )
+# and, for captions, options(ggcalor.mono = ).
+calor_family <- function(type = c("sans", "mono")) {
+  if (match.arg(type) == "mono") getOption("ggcalor.mono", "mono") else getOption("ggcalor.family", "")
 }
 
 # Offset lattice for hexagons: odd rows shift right by half a cell, rows are

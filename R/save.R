@@ -24,8 +24,15 @@ calor_save <- function(plot, filename, pad = 2, ...) {
 #' @export
 calor_size <- function(plot) {
   # Building a grob needs a device; use a throwaway one so no Rplots.pdf appears.
-  grDevices::pdf(NULL)
-  on.exit(grDevices::dev.off(), add = TRUE)
+  # ragg finds system fonts, so text is measured in the font it is drawn in.
+  if (requireNamespace("ragg", quietly = TRUE)) {
+    tmp <- tempfile(fileext = ".png")
+    ragg::agg_png(tmp)
+    on.exit({grDevices::dev.off(); unlink(tmp)}, add = TRUE)
+  } else {
+    grDevices::pdf(NULL)
+    on.exit(grDevices::dev.off(), add = TRUE)
+  }
   g <- ggplot2::ggplotGrob(plot)
   abs_mm <- function(u) sum(vapply(seq_along(u), function(i)
     grid::convertUnit(u[i], "mm", valueOnly = TRUE), numeric(1)))

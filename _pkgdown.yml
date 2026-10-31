@@ -21,7 +21,7 @@ reference:
   - title: Interact and save
     contents: [calor_interactive, calor_girafe, calor_save, calor_size, calor_gtable, calor_anchors]
   - title: Other cell grids
-    contents: [calor_radial, ggwaffle]
+    contents: [calor_radial, calor_waffle]
   - title: Data
     contents: [measles, luad_alterations, dvs_members]
   - title: Internals

@@ -46,11 +46,11 @@ test_that("radial coordinates render without tracks and warn with them", {
 test_that("waffle allocates cells by largest remainder", {
   expect_equal(largest_remainder(c(45, 30, 25), 100), c(45, 30, 25))
   expect_equal(sum(largest_remainder(c(1, 1, 1), 100)), 100)
-  p <- ggwaffle(c(a = 45, b = 30, c = 25), n = 100, rows = 10)
+  p <- calor_waffle(c(a = 45, b = 30, c = 25), n = 100, rows = 10)
   expect_equal(nrow(p@data), 100)
   expect_s3_class(ggplotGrob(p), "gtable")
   df <- data.frame(g = rep(c("x", "y"), each = 2), k = c("a", "b", "a", "b"), v = c(3, 1, 1, 3))
-  expect_s3_class(ggplotGrob(ggwaffle(df, "k", "v", by = "g", n = 20, rows = 4)), "gtable")
+  expect_s3_class(ggplotGrob(calor_waffle(df, "k", "v", by = "g", n = 20, rows = 4)), "gtable")
 })
 
 test_that("interactive cells carry tooltips", {

@@ -12,7 +12,7 @@ calor_dendro(
   k = NULL,
   highlight = FALSE,
   size = 12,
-  colour = "grey30",
+  colour = "#2B2B2B",
   linewidth = 0.4,
   show_tree = TRUE
 )
