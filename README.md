@@ -1,11 +1,67 @@
 # ggcalor
 
-**Heatmaps as a grammar of cells, built on ggplot2.**
+<!-- badges: start -->
+[![pkgdown](https://github.com/loukesio/ggcalor/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/loukesio/ggcalor/actions/workflows/pkgdown.yaml)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+<!-- badges: end -->
 
-ggcalor draws heatmaps and other cell grids (oncoprints, correlation
+> **Heatmaps as a grammar of cells, built on ggplot2.**
+> Clustering · splits · annotation tracks · margins · rings and waffles, all added with `+`.
+
+📖 **Website & full documentation:** <https://loukesio.github.io/ggcalor/> ·
+🖼️ **Gallery:** <https://loukesio.github.io/ggcalor/articles/gallery.html>
+
+**ggcalor** draws heatmaps and other cell grids (oncoprints, correlation
 matrices, calendars, rings, waffles) as ordinary ggplot objects. You add
 clustering, splits, annotation tracks and margins with `+`, the same way you
 add a theme or a scale. *Calor* is Spanish for heat.
+
+<table align="center">
+  <tr>
+    <td align="center" width="25%"><a href="#clustering-splits-and-annotations"><img src="man/figures/readme-dune.png" alt="Clustered heatmap"><br><b>Clustering</b></a><br><sub>trees, splits and tracks</sub></td>
+    <td align="center" width="25%"><a href="#oncoprints"><img src="man/figures/readme-oncoprint.png" alt="Oncoprint"><br><b>Oncoprints</b></a><br><sub>discrete fills and memo sort</sub></td>
+    <td align="center" width="25%"><a href="#beyond-heatmaps"><img src="man/figures/readme-ring.png" alt="Ring heatmap"><br><b>Rings</b></a><br><sub>the grid bent into a circle</sub></td>
+    <td align="center" width="25%"><a href="#beyond-heatmaps"><img src="man/figures/readme-waffle.png" alt="Waffle chart"><br><b>Waffles</b></a><br><sub>unit charts on the same grid</sub></td>
+  </tr>
+</table>
+
+---
+
+## Contents
+
+1. [Installation](#installation)
+2. [Your first heatmap](#your-first-heatmap): one matrix, one figure
+3. [Why ggcalor](#why-ggcalor): cells with a real size, verbs you add
+4. [A tour](#a-tour): clustering, oncoprints, rings and waffles
+5. [The verbs](#the-verbs) · [How it compares](#how-it-compares) · [Data](#data)
+
+---
+
+## Installation
+
+<img align="right" src="man/figures/logo.gif" alt="ggcalor logo: an animated grid of warm and cool cells" width="300">
+
+ggcalor needs R 4.1 and ggplot2 4.0 or later. Install the development
+version from GitHub:
+
+```r
+# install.packages("pak")
+pak::pak("loukesio/ggcalor")
+
+# ...or with remotes
+remotes::install_github("loukesio/ggcalor")
+
+# and load it
+library(ggcalor)
+```
+
+<br clear="right">
+
+## Your first heatmap
+
+Measles cases in every US state from 1930 to 2001, split at the year the
+vaccine was licensed, with yearly totals on top:
 
 <p align="center"><img src="man/figures/readme-measles.png" alt="Measles cases in US states from 1930 to 2001, split at the 1963 vaccine"></p>
 
@@ -23,15 +79,6 @@ ggcalor(measles, cell_size = 2.6, cell_gap = 0.06, border = NA) +
                        na.value = "grey95") +
   labs(title = "Measles cases in the United States, 1930–2001",
        subtitle = "The vaccine was licensed in 1963", fill = "cases")
-```
-
-## Installation
-
-ggcalor needs R 4.1 and ggplot2 4.0 or later.
-
-```r
-# install.packages("pak")
-pak::pak("loukesio/ggcalor")
 ```
 
 ## Why ggcalor
