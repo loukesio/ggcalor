@@ -128,7 +128,6 @@ S7::method(ggplot_build, class_calor) <- function(plot, ...) {
     d$.label[is.na(d$.value)] <- ""
   }
   base@data <- d
-  base <- apply_interactive(base, st)
   if (!is.null(st$smooth)) {
     # Recompute the surface from the matrix in its final order.
     mm <- st$matrix[lr$order, lc$order, drop = FALSE]
@@ -138,6 +137,7 @@ S7::method(ggplot_build, class_calor) <- function(plot, ...) {
     xs <- base@scales$get_scales("x"); xs$labels <- lc$order
     if (identical(st$label_position, "auto") && lc$show_tree) xs$position <- "bottom"
   }
+  base <- apply_interactive(base, st, lr, lc)
 
   base <- apply_label_spec(base, st)
   base <- thin_labels(base, st, lr, lc)

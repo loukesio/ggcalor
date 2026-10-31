@@ -9,6 +9,8 @@
 #' @param n Cells per waffle.
 #' @param rows Rows per waffle.
 #' @param cell_size,cell_gap,cell_radius Cell geometry, as in [ggcalor()].
+#' @param interactive Add 'ggiraph' tooltips; hovering a cell highlights its
+#'   category in every waffle. Render with [calor_girafe()].
 #' @return A `ggplot` object.
 #' @examples
 #' calor_waffle(c(apples = 45, pears = 30, plums = 25), n = 100, rows = 10)
@@ -17,7 +19,7 @@
 #' calor_waffle(df, "crop", "tons", by = "region", n = 50, rows = 10)
 #' @export
 calor_waffle <- function(data, category = NULL, count = NULL, by = NULL, n = 100, rows = 10,
-                     cell_size = 4, cell_gap = 0.15, cell_radius = 0.3) {
+                     cell_size = 4, cell_gap = 0.15, cell_radius = 0.3, interactive = FALSE) {
   if (is.data.frame(data)) {
     category <- category %||% names(data)[1]; count <- count %||% names(data)[2]
     df <- data.frame(category = data[[category]], count = data[[count]],
@@ -51,6 +53,15 @@ calor_waffle <- function(data, category = NULL, count = NULL, by = NULL, n = 100
           plot.caption = element_text(family = calor_family("mono"), size = 7, colour = "#7A7A7A", hjust = 0),
           plot.title.position = "plot", plot.caption.position = "plot",
           plot.margin = margin(12, 14, 10, 14), legend.key.size = grid::unit(4, "mm"))
+  if (interactive) {
+    rlang::check_installed("ggiraph", reason = "for interactive waffles.")
+    shares <- stats::aggregate(i ~ by + category, cells, length)
+    lab <- paste0(shares$category, ": ", format(shares$i * share, digits = 2, trim = TRUE), "%",
+                  ifelse(nlevels(cells$by) > 1, paste0(" of ", shares$by), ""))
+    cells$.tooltip <- lab[match(paste(cells$by, cells$category), paste(shares$by, shares$category))]
+    cells$.data_id <- as.character(cells$category)
+    p <- p + interactive_overlay(aes(tooltip = .data$.tooltip, data_id = .data$.data_id), data = cells)
+  }
   if (nlevels(cells$by) > 1) p <- p + facet_wrap(vars(.data$by), nrow = 1)
   p
 }

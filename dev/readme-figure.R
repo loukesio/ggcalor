@@ -28,9 +28,14 @@ levels(sites$management) <- c("biological", "hobby", "nature reserve", "standard
 p <- ggcalor(t(dune), cell_size = 4.2) +
   calor_dendro(rows = TRUE, cols = TRUE) +
   calor_split(cols = 3) +
-  calor_anno(top = sites) +
-  calor_margin(right = "mean", fill = "#3B8F5C") +
-  scale_fill_distiller(palette = "YlGn", direction = 1) +
+  calor_anno(top = sites, colours = list(
+    # Quiet, earthy tones keep the eye on the cells.
+    management = c("#C9C1B1", "#919F89", "#57717C", "#EDBDAE"),
+    moisture = c("#E4EEF0", "#BDD3CE", "#5F97A4", "#2C3B4D")
+  )) +
+  calor_margin(right = "mean", fill = "#708C69") +
+  # Cream to sage to deep teal, after the "seafarer" palette in ltc.
+  scale_fill_gradientn(colours = c("#FCF3E3", "#BDD3CE", "#708C69", "#013D5A")) +
   labs(title = "Wet meadows grow their own plant community",
        subtitle = "Cover of 30 plant species in 20 Dutch dune meadows",
        caption = "Data: vegan::dune", fill = "cover")

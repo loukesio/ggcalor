@@ -34,7 +34,7 @@ ggplot_add.calor_interactive <- function(object, plot, ...) {
 }
 
 # Replace the cell layer with an interactive tile layer at build time.
-apply_interactive <- function(base, st) {
+apply_interactive <- function(base, st, lr, lc) {
   it <- st$interactive
   if (is.null(it)) return(base)
   d <- base@data
@@ -51,12 +51,33 @@ apply_interactive <- function(base, st) {
   )
   base@data <- d
   cell <- st$cell
-  base@layers[[1]] <- ggiraph::geom_tile_interactive(
-    aes(tooltip = .data$.tooltip, data_id = .data$.data_id),
-    width = 1 - cell$gap, height = 1 - cell$gap, colour = cell$border,
-    linewidth = if (is.na(cell$border)) 0 else 0.3
-  )
+  if (identical(cell$shape, "square") && is.null(st$smooth)) {
+    base@layers[[1]] <- ggiraph::geom_tile_interactive(
+      aes(tooltip = .data$.tooltip, data_id = .data$.data_id),
+      width = 1 - cell$gap, height = 1 - cell$gap, colour = cell$border,
+      linewidth = if (is.na(cell$border)) 0 else 0.3
+    )
+  } else {
+    # Circles, hexagons and smooth surfaces keep their own drawing; a clear
+    # tile on top carries the tooltip, and calor_girafe() veils the rest.
+    mapping <- aes(tooltip = .data$.tooltip, data_id = .data$.data_id)
+    if (!is.null(st$smooth)) {
+      # Smooth surfaces sit on numeric positions: columns left to right, rows
+      # top to bottom.
+      d$.sx <- match(as.character(d$.col), lc$order)
+      d$.sy <- length(lr$order) + 1 - match(as.character(d$.row), lr$order)
+      base@data <- d
+      mapping <- aes(x = .data$.sx, y = .data$.sy, tooltip = .data$.tooltip, data_id = .data$.data_id)
+    }
+    base <- base + interactive_overlay(mapping, height = if (identical(cell$shape, "hex")) sqrt(3) / 2 else 1)
+  }
   base
+}
+
+# A see-through interactive tile layer that only carries hover and tooltip.
+interactive_overlay <- function(mapping, width = 1, height = 1, data = NULL) {
+  ggiraph::geom_tile_interactive(mapping, data = data, width = width, height = height,
+                                 fill = "white", alpha = 0, colour = NA)
 }
 
 #' Render an interactive heatmap
@@ -66,13 +87,24 @@ apply_interactive <- function(base, st) {
 #'
 #' @param plot A [ggcalor()] plot with [calor_interactive()].
 #' @param ... Passed to [ggiraph::girafe()].
-#' @param hover_css CSS for hovered cells.
-#' @param dim_css CSS for the other cells while hovering.
+#' @param hover_css CSS for hovered cells; `NULL` picks a default.
+#' @param dim_css CSS for the other cells while hovering; `NULL` fades them,
+#'   or veils them in white for waffles, hex and circle cells and smooth
+#'   surfaces.
 #' @return A 'girafe' htmlwidget.
 #' @export
-calor_girafe <- function(plot, ..., hover_css = "stroke:black;stroke-width:1.2px;",
-                         dim_css = "opacity:0.35;") {
+calor_girafe <- function(plot, ..., hover_css = NULL, dim_css = NULL) {
   rlang::check_installed("ggiraph", reason = "for interactive heatmaps.")
+  # Plots drawn under a clear overlay (waffles, hex and circle cells, smooth
+  # surfaces) dim by veiling the other cells in white instead of fading them.
+  overlay <- if (is_calor(plot)) {
+    !identical(calor_state(plot)$cell$shape, "square") || !is.null(calor_state(plot)$smooth)
+  } else {
+    any(vapply(plot@layers, function(l) inherits(l$geom, "GeomInteractiveTile") &&
+                 identical(l$aes_params$alpha, 0), logical(1)))
+  }
+  hover_css <- hover_css %||% if (overlay) "stroke:#2B2B2B;stroke-width:1.2px;" else "stroke:black;stroke-width:1.2px;"
+  dim_css <- dim_css %||% if (overlay) "fill:white;fill-opacity:0.6;" else "opacity:0.35;"
   sz <- calor_size(plot) / 25.4
   ggiraph::girafe(ggobj = plot, width_svg = sz[1] + 0.2, height_svg = sz[2] + 0.2, ...,
                   options = list(ggiraph::opts_hover(css = hover_css),

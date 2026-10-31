@@ -89,3 +89,14 @@ test_that("calor_labels(every = ) thins each axis on its own", {
   expect_equal(setdiff(pp$x$get_labels(), ""), c("1880", "1900"))
   expect_equal(setdiff(pp$y$get_labels(), ""), c("Oct", "Jul", "Apr", "Jan"))
 })
+
+test_that("hex cells, smooth surfaces and waffles become interactive", {
+  skip_if_not_installed("ggiraph")
+  has_ids <- function(w) grepl("data-id", w$x$html)
+  hx <- calor_girafe(ggcalor(volcano[1:8, 1:8], cell_shape = "hex") + calor_interactive())
+  expect_true(has_ids(hx))
+  expect_true(grepl("<polygon", hx$x$html))  # hexagons are still drawn as hexagons
+  expect_true(has_ids(calor_girafe(ggcalor(volcano[1:12, 1:12], smooth = "contour") + calor_interactive())))
+  w <- calor_girafe(calor_waffle(c(a = 40, b = 60), interactive = TRUE))
+  expect_true(grepl("title='a: 40%'", w$x$html, fixed = TRUE))
+})

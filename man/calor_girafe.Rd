@@ -4,21 +4,18 @@
 \alias{calor_girafe}
 \title{Render an interactive heatmap}
 \usage{
-calor_girafe(
-  plot,
-  ...,
-  hover_css = "stroke:black;stroke-width:1.2px;",
-  dim_css = "opacity:0.35;"
-)
+calor_girafe(plot, ..., hover_css = NULL, dim_css = NULL)
 }
 \arguments{
 \item{plot}{A \code{\link[=ggcalor]{ggcalor()}} plot with \code{\link[=calor_interactive]{calor_interactive()}}.}
 
 \item{...}{Passed to \code{\link[ggiraph:girafe]{ggiraph::girafe()}}.}
 
-\item{hover_css}{CSS for hovered cells.}
+\item{hover_css}{CSS for hovered cells; \code{NULL} picks a default.}
 
-\item{dim_css}{CSS for the other cells while hovering.}
+\item{dim_css}{CSS for the other cells while hovering; \code{NULL} fades them,
+or veils them in white for waffles, hex and circle cells and smooth
+surfaces.}
 }
 \value{
 A 'girafe' htmlwidget.

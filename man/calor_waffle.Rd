@@ -13,7 +13,8 @@ calor_waffle(
   rows = 10,
   cell_size = 4,
   cell_gap = 0.15,
-  cell_radius = 0.3
+  cell_radius = 0.3,
+  interactive = FALSE
 )
 }
 \arguments{
@@ -26,6 +27,9 @@ calor_waffle(
 \item{rows}{Rows per waffle.}
 
 \item{cell_size, cell_gap, cell_radius}{Cell geometry, as in \code{\link[=ggcalor]{ggcalor()}}.}
+
+\item{interactive}{Add 'ggiraph' tooltips; hovering a cell highlights its
+category in every waffle. Render with \code{\link[=calor_girafe]{calor_girafe()}}.}
 }
 \value{
 A \code{ggplot} object.

@@ -56,9 +56,14 @@ levels(sites$management) <- c("biological", "hobby", "nature reserve", "standard
 ggcalor(t(dune), cell_size = 4.2) +
   calor_dendro(rows = TRUE, cols = TRUE) +
   calor_split(cols = 3) +
-  calor_anno(top = sites) +
-  calor_margin(right = "mean", fill = "#3B8F5C") +
-  scale_fill_distiller(palette = "YlGn", direction = 1) +
+  calor_anno(top = sites, colours = list(
+    # Quiet, earthy tones keep the eye on the cells.
+    management = c("#C9C1B1", "#919F89", "#57717C", "#EDBDAE"),
+    moisture = c("#E4EEF0", "#BDD3CE", "#5F97A4", "#2C3B4D")
+  )) +
+  calor_margin(right = "mean", fill = "#708C69") +
+  # Cream to sage to deep teal, after the "seafarer" palette in ltc.
+  scale_fill_gradientn(colours = c("#FCF3E3", "#BDD3CE", "#708C69", "#013D5A")) +
   labs(title = "Wet meadows grow their own plant community",
        subtitle = "Cover of 30 plant species in 20 Dutch dune meadows",
        caption = "Data: vegan::dune", fill = "cover")
@@ -350,18 +355,63 @@ calor_waffle(penguins, "species", "Freq", by = "island", cell_size = 3.2) +
 
 ## Interactive
 
-With ggiraph installed, `calor_interactive()` adds tooltips to the cells and
-categorical tracks, and hovering a cell highlights its whole row (or column,
-with `data_id = "col"`). `calor_girafe()` renders the result as an HTML
-widget.
+Any ggcalor plot becomes interactive with one more line: add
+`calor_interactive()` and render with `calor_girafe()` (this needs the
+ggiraph package). Every cell gets a tooltip, and `data_id` sets what lights
+up together on hover: the `"cell"`, its whole `"row"`, or its whole `"col"`.
+Hover over the plots below.
 
-```{r interactive, eval = FALSE}
+In the clustered heatmap, hovering a species highlights its row across all
+three slices, and hovering a site in the management track highlights that
+site's column:
+
+```{r interactive-dune}
 p <- ggcalor(t(dune), cell_size = 4.2) +
   calor_dendro(rows = TRUE, cols = TRUE) +
-  calor_anno(top = sites) +
+  calor_split(cols = 3) +
+  calor_anno(top = sites["management"]) +
+  scale_fill_gradientn(colours = c("#FCF3E3", "#BDD3CE", "#708C69", "#013D5A")) +
+  labs(fill = "cover") +
   calor_interactive(data_id = "row")
 calor_girafe(p)
 ```
+
+In the oncoprint, `data_id = "col"` highlights one tumour at a time, so you
+can read all of its alterations down the column:
+
+```{r interactive-oncoprint}
+p <- ggcalor(m, cell_size = c(1.6, 4), cell_gap = 0.2, border = NA, labels = "rows") +
+  calor_order(rows = "sum", cols = "memo") +
+  scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "#F1EEE8") +
+  labs(fill = NULL) +
+  theme(legend.position = "bottom") +
+  calor_interactive(data_id = "col")
+calor_girafe(p)
+```
+
+Rings work too. Here a custom tooltip names the month and year, and hovering
+lights up a whole year as one spoke:
+
+```{r interactive-ring}
+p <- ggcalor(global_temp, cell_size = 2.6, border = NA) +
+  calor_radial(inner.radius = 0.5, gap = 0.35, label_size = 8) +
+  calor_labels(every = c(rows = 3, cols = 20)) +
+  anomaly +
+  labs(fill = "against the 1951–1980 average") +
+  calor_interactive(data_id = "col", tooltip = function(row, col, value)
+    sprintf("%s %s: %+.2f °C", row, col, value))
+calor_girafe(p)
+```
+
+`calor_waffle(interactive = TRUE)` does the same for waffles: hovering a
+square highlights that species on every island.
+
+```{r interactive-waffle}
+calor_girafe(calor_waffle(penguins, "species", "Freq", by = "island",
+                          cell_size = 3.2, interactive = TRUE))
+```
+
+Hex cells, circle cells and smooth surfaces are interactive in the same way.
 
 ## Saving
 
