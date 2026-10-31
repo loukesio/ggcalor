@@ -184,8 +184,8 @@ Add `calor_radial()` and the years run clockwise around a ring, with the
 months from January (outside) to December (inside):
 
 ```r
-ggcalor(global_temp, cell_size = 2.6, border = NA) +
-  calor_radial(inner.radius = 0.4, gap = 0.25, label_size = 8) +
+ggcalor(global_temp, cell_size = 3.4, border = NA) +
+  calor_radial(inner.radius = 0.5, gap = 0.35, label_size = 9) +
   calor_labels(every = c(rows = 3, cols = 20)) +
   anomaly +
   labs(title = "A planet running a fever",
@@ -193,7 +193,7 @@ ggcalor(global_temp, cell_size = 2.6, border = NA) +
        caption = "Data: NASA GISTEMP v4", fill = "against the 1951–1980 average")
 ```
 
-<p align="center"><img src="man/figures/readme-ring.png" alt="Global monthly temperature anomalies from 1880 to 2025, as a ring" width="70%"></p>
+<p align="center"><img src="man/figures/readme-ring.png" alt="Global monthly temperature anomalies from 1880 to 2025, as a ring" width="90%"></p>
 
 `calor_labels(every = )` thins long runs of names: here every third month
 and every twentieth year.

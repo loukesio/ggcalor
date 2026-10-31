@@ -71,8 +71,8 @@ p <- ggcalor(global_temp, cell_size = 2.2, border = NA) +
        caption = "Data: NASA GISTEMP v4", fill = NULL)
 fig(p, "temp-flat")
 
-p <- ggcalor(global_temp, cell_size = 2.6, border = NA) +
-  calor_radial(inner.radius = 0.4, gap = 0.25, label_size = 8) +
+p <- ggcalor(global_temp, cell_size = 3.4, border = NA) +
+  calor_radial(inner.radius = 0.5, gap = 0.35, label_size = 9) +
   calor_labels(every = c(rows = 3, cols = 20)) +
   anomaly +
   labs(title = "A planet running a fever",
