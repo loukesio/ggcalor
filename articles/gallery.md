@@ -179,29 +179,29 @@ so the legend also shows how the values are distributed.
 
 A character matrix gets a discrete fill. `luad_alterations` has one row
 per gene and one column per TCGA lung adenocarcinoma, with `NA` where a
-gene is not altered. We keep the ten most often altered genes and the
-tumours altered in at least one of them. With over a hundred tumours
-across and only ten genes down, the plot is long and flat; small square
-cells (`cell_size = 2.2`, in millimetres) keep it readable without
-making it too wide.
+gene is not altered. We keep the eight most often altered genes and the
+tumours altered in at least one of them. With about a hundred tumours
+across and only eight genes down, the plot is long and flat, so we raise
+the text size to match the 3 mm cells and keep it readable when the
+figure is scaled down.
 
 ``` r
 
-alt_colours <- c(mutation = "#3B8F5C", amplification = "#E4572E",
-                 `deep deletion` = "#2E86AB", `mutation + amplification` = "#8E5BA8")
+alt_colours <- c(mutation = "#245E55", amplification = "#ED773C",
+                 `deep deletion` = "#808BC5", `mutation + amplification` = "#C63F3E")
 
 n_altered <- rowSums(!is.na(luad_alterations))
-m <- luad_alterations[order(n_altered, decreasing = TRUE)[1:10], ]
+m <- luad_alterations[order(n_altered, decreasing = TRUE)[1:8], ]
 m <- m[, colSums(!is.na(m)) > 0]
 
-ggcalor(m, cell_size = 2.2, cell_gap = 0.2, border = NA, labels = "rows") +
+ggcalor(m, cell_size = 3, cell_gap = 0.3, border = NA, labels = "rows") +
   calor_order(rows = "sum", cols = "memo") +
-  calor_margin(right = "sum", top = "sum", size = 12) +
-  scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "#F1EEE8") +
+  calor_margin(right = "sum", top = "sum", size = 14, fill = "#2C3B4D") +
+  scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "#EAE4DA") +
   labs(title = "KRAS and BRAF are rarely altered in the same tumour",
-       subtitle = "RAS/RAF/MEK/JNK pathway alterations in 106 lung adenocarcinomas",
+       subtitle = "The eight most often altered RAS/RAF/MEK/JNK genes in 102 lung adenocarcinomas",
        caption = "Data: TCGA via cBioPortal", fill = NULL) +
-  theme(legend.position = "bottom", axis.text.y = element_text(size = 6.5))
+  theme(legend.position = "bottom", text = element_text(size = 13))
 ```
 
 ![](gallery_files/figure-html/oncoprint-1.png)
@@ -414,11 +414,11 @@ you can read all of its alterations down the column:
 
 ``` r
 
-p <- ggcalor(m, cell_size = 2.2, cell_gap = 0.2, border = NA, labels = "rows") +
+p <- ggcalor(m, cell_size = 3, cell_gap = 0.3, border = NA, labels = "rows") +
   calor_order(rows = "sum", cols = "memo") +
-  scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "#F1EEE8") +
+  scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "#EAE4DA") +
   labs(fill = NULL) +
-  theme(legend.position = "bottom", axis.text.y = element_text(size = 6.5)) +
+  theme(legend.position = "bottom", text = element_text(size = 13)) +
   calor_interactive(data_id = "col")
 calor_girafe(p)
 ```
