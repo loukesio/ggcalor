@@ -146,21 +146,21 @@ which makes mutually exclusive alterations easy to see: KRAS is altered in 55
 tumours and BRAF in 18, but only 5 tumours have both.
 
 ```r
-alt_colours <- c(mutation = "#3B8F5C", amplification = "#E4572E",
-                 `deep deletion` = "#2E86AB", `mutation + amplification` = "#8E5BA8")
+alt_colours <- c(mutation = "#245E55", amplification = "#ED773C",
+                 `deep deletion` = "#808BC5", `mutation + amplification` = "#C63F3E")
 
 n_altered <- rowSums(!is.na(luad_alterations))
-m <- luad_alterations[order(n_altered, decreasing = TRUE)[1:10], ]
+m <- luad_alterations[order(n_altered, decreasing = TRUE)[1:8], ]
 m <- m[, colSums(!is.na(m)) > 0]
 
-ggcalor(m, cell_size = 2.2, cell_gap = 0.2, border = NA, labels = "rows") +
+ggcalor(m, cell_size = 3, cell_gap = 0.3, border = NA, labels = "rows") +
   calor_order(rows = "sum", cols = "memo") +
-  calor_margin(right = "sum", top = "sum", size = 12) +
-  scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "#F1EEE8") +
+  calor_margin(right = "sum", top = "sum", size = 14, fill = "#2C3B4D") +
+  scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "#EAE4DA") +
   labs(title = "KRAS and BRAF are rarely altered in the same tumour",
-       subtitle = "RAS/RAF/MEK/JNK pathway alterations in 106 lung adenocarcinomas",
+       subtitle = "The eight most often altered RAS/RAF/MEK/JNK genes in 102 lung adenocarcinomas",
        caption = "Data: TCGA via cBioPortal", fill = NULL) +
-  theme(legend.position = "bottom", axis.text.y = element_text(size = 6.5))
+  theme(legend.position = "bottom", text = element_text(size = 13))
 ```
 
 <p align="center"><img src="man/figures/readme-oncoprint.png" alt="Oncoprint of RAS/RAF/MEK/JNK pathway alterations"></p>
