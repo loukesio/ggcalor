@@ -153,15 +153,14 @@ n_altered <- rowSums(!is.na(luad_alterations))
 m <- luad_alterations[order(n_altered, decreasing = TRUE)[1:10], ]
 m <- m[, colSums(!is.na(m)) > 0]
 
-# Narrow, tall cells: many tumours across, few genes down.
-ggcalor(m, cell_size = c(1.6, 4), cell_gap = 0.2, border = NA, labels = "rows") +
+ggcalor(m, cell_size = 2.2, cell_gap = 0.2, border = NA, labels = "rows") +
   calor_order(rows = "sum", cols = "memo") +
   calor_margin(right = "sum", top = "sum", size = 12) +
   scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "#F1EEE8") +
   labs(title = "KRAS and BRAF are rarely altered in the same tumour",
        subtitle = "RAS/RAF/MEK/JNK pathway alterations in 106 lung adenocarcinomas",
        caption = "Data: TCGA via cBioPortal", fill = NULL) +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom", axis.text.y = element_text(size = 6.5))
 ```
 
 <p align="center"><img src="man/figures/readme-oncoprint.png" alt="Oncoprint of RAS/RAF/MEK/JNK pathway alterations"></p>
