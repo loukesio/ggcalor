@@ -383,7 +383,7 @@ p <- ggcalor(m, cell_size = 2.2, cell_gap = 0.2, border = NA, labels = "rows") +
   calor_order(rows = "sum", cols = "memo") +
   scale_fill_manual(values = alt_colours, breaks = names(alt_colours), na.value = "#F1EEE8") +
   labs(fill = NULL) +
-  theme(legend.position = "bottom") +
+  theme(legend.position = "bottom", axis.text.y = element_text(size = 6.5)) +
   calor_interactive(data_id = "col")
 calor_girafe(p)
 ```
